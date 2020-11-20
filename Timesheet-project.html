@@ -2,21 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Icescrum</title>
+    <title>Tâches par sprint</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 <div class="p-2">
-    <h1>Récupération de données sur IceScrum</h1>
+    <h1>Toutes les tâches, par sprint</h1>
     <div class="form-row">
-        <label class="form-check-label m-2" for="inpProject">ID du projet: </label>
-        <select id="inpProject" class="form-control col-2 m-2">
-            <option>-- Choisir un projet --</option>
-            <option value="CSUNVBA1">CSU</option>
-            <option value="PWB2AGDC">KanFF</option>
-            <option value="BARGYLUS">Bargylus</option>
-            <option value="PWB2AVED">Vedjiz</option>
-        </select>
+        <input id="inpProject" type="hidden">
         <label class="form-check-label m-2" for="inpSprint">Sprint: </label>
         <select id="inpSprint" class="form-control col-2 m-2">
         </select>
@@ -39,6 +32,7 @@
     </table>
 </div>
 </body>
+<script src='init.js'></script>
 <script>
     var iceScrumToken = '91030e0ead69498cbacbf3904fa99629'
     var months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jui','Aou','Sep','Oct','Nov','Déc']
@@ -132,6 +126,7 @@
                 fetch('https://cloud.icescrum.com/ws/project/' + inpProject.value + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
                     return response.json()
                 }).then(function (data) {
+                    console.log(data)
                     data.forEach(function (task) {
                         if (task.type == 10 || task.type == 11) // task is urgent or recurrent
                         {
@@ -155,18 +150,16 @@
         })
     }
 
-    inpProject.addEventListener('change', function () {
-        // harsh reset of dropdown
-        inpSprint.innerHTML = "<option value=0>Tous</option>"
-        fetch('https://cloud.icescrum.com/ws/project/' + inpProject.value + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
-            return response.json()
-        }).then(function (data) {
-            data.forEach(function (sprint) {
-                opt = document.createElement('option')
-                opt.value = sprint.id
-                opt.text = sprint.orderNumber
-                inpSprint.appendChild(opt)
-            })
+    // harsh reset of dropdown
+    inpSprint.innerHTML = "<option value=0>Tous</option>"
+    fetch('https://cloud.icescrum.com/ws/project/' + inpProject.value + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+        return response.json()
+    }).then(function (data) {
+        data.forEach(function (sprint) {
+            opt = document.createElement('option')
+            opt.value = sprint.id
+            opt.text = sprint.orderNumber
+            inpSprint.appendChild(opt)
         })
     })
 </script>

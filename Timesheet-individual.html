@@ -7,11 +7,10 @@
 </head>
 <body>
 <div class="p-5 m-2">
-    <h1>Journal de travail</h1>
+    <h1>Journal de travail individuel</h1>
     <label>De </label>
-    <input id="inpPerson" type="text" placeholder="Prénom" value="Luís Pedro">
-    <label> sur le projet: </label>
-    <input id="inpProject" type="text" placeholder="ID du projet" value="PWB2AGDC"><br>
+    <select id="inpPerson"></select>
+    <input id="inpProject" type="hidden">
     <input id="chkMode" type="checkbox" checked> fusionner les noms de story identiques<br>
     <button onclick="getData()">Ok</button>
     <table class="table table-striped table-bordered">
@@ -25,6 +24,7 @@
     </table>
 </div>
 </body>
+<script src='init.js'></script>
 <script>
     var iceScrumToken = '91030e0ead69498cbacbf3904fa99629' // for API authentication
 
