@@ -14,6 +14,7 @@
             top: 0px;
             opacity: 1;
         }
+
         .code {
             font-family: "Courier New";
             font-weight: bolder;
@@ -98,8 +99,6 @@
 </html>
 <script>
 
-    API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
-
     // ========= Event handlers ========
     // Show / Hide sections with radio buttons
     rbtPerso.addEventListener('click', function () {
@@ -153,6 +152,7 @@
     // Configuration check
     if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined' && typeof (timeUnit) !== 'undefined')
     {
+        var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
         loadData()
     } else
     {
@@ -281,6 +281,9 @@
                     divContent.classList.remove('d-none')
                 })
             })
+        }).catch(function (erreur) {
+            alert("Erreur de connexion au serveur IceScrum\n\nSi vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur, alors c'est probablement que votre token est pourri")
+            window.close()
         })
     }
 
