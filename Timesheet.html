@@ -67,7 +67,7 @@
             <th>Task</th>
             <th title='Dernière mise à jour de la tâche'>Date</th>
             <th>Temps [<span id="spnTUnit1"></span>]</th>
-            <th>Sprint</th>
+            <th>Release / Sprint</th>
             </thead>
             <tbody id="tblBodyPerso"></tbody>
         </table>
@@ -97,6 +97,9 @@
 </body>
 </html>
 <script>
+
+    API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
+
     // ========= Event handlers ========
     // Show / Hide sections with radio buttons
     rbtPerso.addEventListener('click', function () {
@@ -162,7 +165,7 @@
     spnTUnit2.innerText = timeUnit
 
     // Project name
-    fetch('https://cloud.icescrum.com/ws/project/' + projectId + '/?icescrum-token=' + iceScrumToken).then(function (response) {
+    fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
         return response.json()
     }).then(function (data) {
         spnProjName.innerText = data.name
@@ -221,7 +224,7 @@
         stories[11] = {name: '(Récurrentes)', tasks: []}
         let sprints = [] // the sprints of the project
         // First get all sprints
-        fetch('https://cloud.icescrum.com/ws/project/' + projectId + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+        fetch(API_base_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (data) {
             data.forEach(function (sprint) {
@@ -233,7 +236,7 @@
             })
             projectSprints = sprints
         }).then(function () { // get stories
-            fetch('https://cloud.icescrum.com/ws/project/' + projectId + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
+            fetch(API_base_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
                 return response.json()
             }).then(function (data) {
                 data.forEach(function (story) {
@@ -252,7 +255,7 @@
                     }
                 })
             }).then(function () { // get all tasks
-                fetch('https://cloud.icescrum.com/ws/project/' + projectId + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
+                fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
                     return response.json()
                 }).then(function (data) {
                     data.forEach(function (task) {
