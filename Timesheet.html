@@ -196,19 +196,38 @@
         res = []
         stories.forEach(function (story) {
             story.tasks.forEach(function (task) {
-                res.push({
-                    task: task.name,
-                    story: story.name,
-                    release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
-                    sprint: task.sprint.index,
-                    owner: task.responsible ? task.responsible.firstName : '',
-                    initial_planned_time: task.initial,
-                    spent_time: task.spent,
-                    type: story.type,
-                    effort: story.effort,
-                    value: story.value,
-                    date: task.doneDate ? task.doneDate.substring(0, 10) : ''
-                })
+                if (task.tags.length == 0) {
+                    res.push({
+                        task: task.name,
+                        story: story.name,
+                        release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
+                        sprint: task.sprint.index,
+                        owner: task.responsible ? task.responsible.firstName : '',
+                        initial_planned_time: task.initial,
+                        spent_time: task.spent,
+                        type: story.type == 0 ? 'user' : (story.type == 3 ? 'tech' : 'rec/urg'),
+                        effort: story.effort,
+                        value: story.value,
+                        date: task.doneDate ? task.doneDate.substring(0, 10) : ''
+                    })
+                } else {
+                    task.tags.forEach(function (tag) {
+                        res.push({
+                            task: task.name,
+                            story: story.name,
+                            release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
+                            sprint: task.sprint.index,
+                            owner: task.responsible ? task.responsible.firstName : '',
+                            initial_planned_time: task.initial,
+                            spent_time: task.spent,
+                            type: story.type == 0 ? 'user' : (story.type == 3 ? 'tech' : 'rec/urg'),
+                            effort: story.effort,
+                            tag: tag,
+                            value: story.value,
+                            date: task.doneDate ? task.doneDate.substring(0, 10) : ''
+                        })
+                    })
+                }
             })
         })
         return res
