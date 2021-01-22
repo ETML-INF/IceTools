@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title>Journal</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <!-- external libs from cdnjs -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+    <!-- PivotTable.js libs from ../dist -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
+
     <script src='config.js'></script>
     <script src='_icescrum_api_token.js'></script>
     <style>
@@ -53,8 +61,9 @@
 
     <div class="pl-5 pr-2">
         Données:
-        <input name="selDisplay" id="rbtPerso" type="radio" checked> personnelles ou
-        <input name="selDisplay" id="rbtProj" type="radio"> du projet
+        <input name="selDisplay" id="rbtPerso" type="radio" checked> personnelles,
+        <input name="selDisplay" id="rbtProj" type="radio"> du projet ou
+        <input name="selDisplay" id="rbtPivot" type="radio"> tableau croisé
     </div>
 
     <div class="pl-5  pr-2" id="divPerso">
@@ -94,6 +103,13 @@
             <tbody id="tblBodyProj"></tbody>
         </table>
     </div>
+
+    <div class="pl-5 pr-2 d-none" id="divPivot">
+        <h3>PivotTable</h3>
+        <div id="output" style="margin: 30px;"></div>
+        <div style="font-size: x-small">Powered by <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
+    </div>
+
 </div>
 </body>
 </html>
@@ -104,11 +120,19 @@
     rbtPerso.addEventListener('click', function () {
         divPerso.classList.remove('d-none')
         divProj.classList.add('d-none')
+        divPivot.classList.add('d-none')
     })
 
     rbtProj.addEventListener('click', function () {
         divPerso.classList.add('d-none')
         divProj.classList.remove('d-none')
+        divPivot.classList.add('d-none')
+    })
+
+    rbtPivot.addEventListener('click', function () {
+        divPerso.classList.add('d-none')
+        divProj.classList.add('d-none')
+        divPivot.classList.remove('d-none')
     })
 
     // Person selection change
@@ -242,7 +266,7 @@
                 data.forEach(function (story) {
                     if (inpSprint.value == 0) // no sprint requested
                     {
-                        stories[story.id] = {name: story.name, tasks: []}
+                        stories[story.id] = {name: story.name, type: story.type, effort: story.effort, value: story.value, tasks: []}
                     } else // keep story only if it's in the selected sprint
                     {
                         if (story.parentSprint) // story is planned
@@ -274,6 +298,13 @@
                         }
                     })
                 }).then(function () { // show tasks
+                    var pivotdata = extractpivotdata(stories)
+                    $("#output").pivotUI(pivotdata,
+                        {
+                            rows: ["release_sprint","story"],
+                            cols: ["owner"]
+                        }
+                    );
                     projectStories = stories
                     inpSprint.disabled = false
                     inpPerson.disabled = false
@@ -285,6 +316,27 @@
             alert("Erreur de connexion au serveur IceScrum\n\nSi vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur, alors c'est probablement que votre token est pourri")
             window.close()
         })
+    }
+
+    function extractpivotdata(stories) {
+        res = []
+        stories.forEach(function (story) {
+            story.tasks.forEach(function (task) {
+                res.push({
+                    task: task.name,
+                    story:story.name,
+                    release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
+                    sprint: task.sprint.index,
+                    owner: task.responsible ? task.responsible.firstName : '',
+                    initial_planned_time: task.initial,
+                    spent_time: task.spent,
+                    type: story.type,
+                    effort: story.effort,
+                    value: story.value
+                })
+            })
+        })
+        return res
     }
 
 </script>
