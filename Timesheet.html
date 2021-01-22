@@ -34,6 +34,7 @@
 <body>
 <div class="pl-5 m-2 mt-4 text-center">
     <h1>Projet <span id="spnProjName">?</span></h1>
+    <div class="small">Unité de temps: <span id="spnTUnit"></span></div>
     <div id="divBadConfig" class="container d-none text-left">
         <p>Cette page est mal configurée, voici ce que vous devez vérifier:</p>
         <ol>
@@ -59,114 +60,13 @@
 </div>
 <div id="divContent" class="d-none">
 
-    <div class="pl-5 pr-2">
-        Données:
-        <input name="selDisplay" id="rbtPerso" type="radio" checked> personnelles,
-        <input name="selDisplay" id="rbtProj" type="radio"> du projet ou
-        <input name="selDisplay" id="rbtPivot" type="radio"> tableau croisé
-    </div>
-
-    <div class="pl-5  pr-2" id="divPerso">
-        <h3>Journal de travail individuel de</h3>
-        <select class="form-control col-2 m-2" id="inpPerson" disabled>
-            <option>--- Choisir ---</option>
-        </select>
-        <table class="table table-striped table-bordered">
-            <thead class="thead-dark">
-            <th>Story</th>
-            <th>Task</th>
-            <th title='Dernière mise à jour de la tâche'>Date</th>
-            <th>Temps [<span id="spnTUnit1"></span>]</th>
-            <th>Release / Sprint</th>
-            </thead>
-            <tbody id="tblBodyPerso"></tbody>
-        </table>
-    </div>
-
-
-    <div class="pl-5 pr-2 d-none" id="divProj">
-        <h3>Toutes les tâches, par sprint</h3>
-        <div class="form-row">
-            <label class="form-check-label m-2" for="inpSprint">Sprint: </label>
-            <select id="inpSprint" class="form-control col-2 m-2" disabled>
-                <option value=0>--- Tous ---</option>
-            </select>
-        </div>
-        <table class="table table-striped table-bordered">
-            <thead class="thead-dark">
-            <th>Story</th>
-            <th>Task</th>
-            <th title='Dernière mise à jour de la tâche'>Date</th>
-            <th>Temps [<span id="spnTUnit2"></span>]</th>
-            <th>Responsable</th>
-            </thead>
-            <tbody id="tblBodyProj"></tbody>
-        </table>
-    </div>
-
-    <div class="pl-5 pr-2 d-none" id="divPivot">
-        <h3>PivotTable</h3>
-        <div id="output" style="margin: 30px;"></div>
-        <div style="font-size: x-small">Powered by <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
-    </div>
+    <div id="output" style="margin: 30px;"></div>
+    <div style="font-size: x-small">Powered by <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
 
 </div>
 </body>
 </html>
 <script>
-
-    // ========= Event handlers ========
-    // Show / Hide sections with radio buttons
-    rbtPerso.addEventListener('click', function () {
-        divPerso.classList.remove('d-none')
-        divProj.classList.add('d-none')
-        divPivot.classList.add('d-none')
-    })
-
-    rbtProj.addEventListener('click', function () {
-        divPerso.classList.add('d-none')
-        divProj.classList.remove('d-none')
-        divPivot.classList.add('d-none')
-    })
-
-    rbtPivot.addEventListener('click', function () {
-        divPerso.classList.add('d-none')
-        divProj.classList.add('d-none')
-        divPivot.classList.remove('d-none')
-    })
-
-    // Person selection change
-    inpPerson.addEventListener('change', function () {
-        filteredTasks = []
-        projectStories.forEach(function (story) {
-            story.tasks.forEach(function (task, index) {
-                if (task.responsible)
-                { // someone took the task
-                    if (task.responsible.firstName == inpPerson.value)
-                    {
-                        task.data = projectSprints[task.sprint.id] ? projectSprints[task.sprint.id].release + " / " + projectSprints[task.sprint.id].number : '?' // specific data in view by people is the sprint number
-                        filteredTasks.push(task)
-                    }
-                }
-            })
-        })
-        showData(tblBodyPerso, filteredTasks)
-    })
-
-    // Sprint selection change
-    inpSprint.addEventListener('change', function () {
-        filteredTasks = []
-        projectStories.forEach(function (story) {
-            story.tasks.forEach(function (task, index) {
-                if (task.sprint.id == inpSprint.value)
-                {
-                    task.data = task.responsible ? task.responsible.firstName : '?' // specific data in view by sprint is the person
-                    filteredTasks.push(task)
-                }
-            })
-        })
-        showData(tblBodyProj, filteredTasks)
-    })
 
     // ============ Initialization =================
     var months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jui', 'Aou', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -184,9 +84,8 @@
         spnLoading.classList.add('d-none')
     }
 
-    // Unit in headers
-    spnTUnit1.innerText = timeUnit
-    spnTUnit2.innerText = timeUnit
+    // Unit in title
+    spnTUnit.innerText = timeUnit
 
     // Project name
     fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
@@ -194,13 +93,6 @@
     }).then(function (data) {
         spnProjName.innerText = data.name
     })
-
-    // Team in dropdown
-    team.forEach(element => {
-        opt = document.createElement('option')
-        opt.text = element
-        inpPerson.appendChild(opt)
-    });
 
     // Business stuff....
     function showData(table, tasks)
@@ -253,10 +145,6 @@
         }).then(function (data) {
             data.forEach(function (sprint) {
                 sprints[sprint.id] = {number: sprint.orderNumber, release: sprint.parentRelease.name}
-                opt = document.createElement('option')
-                opt.value = sprint.id
-                opt.text = sprint.parentRelease.name + " - " + sprint.orderNumber
-                inpSprint.appendChild(opt)
             })
             projectSprints = sprints
         }).then(function () { // get stories
@@ -264,19 +152,7 @@
                 return response.json()
             }).then(function (data) {
                 data.forEach(function (story) {
-                    if (inpSprint.value == 0) // no sprint requested
-                    {
-                        stories[story.id] = {name: story.name, type: story.type, effort: story.effort, value: story.value, tasks: []}
-                    } else // keep story only if it's in the selected sprint
-                    {
-                        if (story.parentSprint) // story is planned
-                        {
-                            if (story.parentSprint.id == inpSprint.value)
-                            {
-                                stories[story.id] = {name: story.name, tasks: []}
-                            }
-                        }
-                    }
+                    stories[story.id] = {name: story.name, type: story.type, effort: story.effort, value: story.value, tasks: []}
                 })
             }).then(function () { // get all tasks
                 fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
@@ -285,10 +161,7 @@
                     data.forEach(function (task) {
                         if (task.type == 10 || task.type == 11) // task is urgent or recurrent
                         {
-                            if (inpSprint.value == 0 || task.sprint.id == inpSprint.value) // in a sprint we want (all or a specific one)
-                            {
-                                stories[task.type].tasks.push(task)
-                            }
+                            stories[task.type].tasks.push(task)
                         } else // it's linked to a user story
                         {
                             if (typeof (stories[task.parentStory.id]) != 'undefined') // it is one of the stories we kept for display
@@ -301,13 +174,11 @@
                     var pivotdata = extractpivotdata(stories)
                     $("#output").pivotUI(pivotdata,
                         {
-                            rows: ["release_sprint","story"],
+                            rows: ["date", "story", "task"],
                             cols: ["owner"]
                         }
                     );
                     projectStories = stories
-                    inpSprint.disabled = false
-                    inpPerson.disabled = false
                     spnLoading.classList.add('d-none')
                     divContent.classList.remove('d-none')
                 })
@@ -318,13 +189,14 @@
         })
     }
 
-    function extractpivotdata(stories) {
+    function extractpivotdata(stories)
+    {
         res = []
         stories.forEach(function (story) {
             story.tasks.forEach(function (task) {
                 res.push({
                     task: task.name,
-                    story:story.name,
+                    story: story.name,
                     release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
                     sprint: task.sprint.index,
                     owner: task.responsible ? task.responsible.firstName : '',
@@ -332,7 +204,8 @@
                     spent_time: task.spent,
                     type: story.type,
                     effort: story.effort,
-                    value: story.value
+                    value: story.value,
+                    date: task.doneDate ? task.doneDate.substring(0, 10) : ''
                 })
             })
         })
