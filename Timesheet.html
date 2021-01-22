@@ -159,14 +159,16 @@
                     return response.json()
                 }).then(function (data) {
                     data.forEach(function (task) {
-                        if (task.type == 10 || task.type == 11) // task is urgent or recurrent
-                        {
-                            stories[task.type].tasks.push(task)
-                        } else // it's linked to a user story
-                        {
-                            if (typeof (stories[task.parentStory.id]) != 'undefined') // it is one of the stories we kept for display
+                        if (task.doneDate) {
+                            if (task.type == 10 || task.type == 11) // task is urgent or recurrent
                             {
-                                stories[task.parentStory.id].tasks.push(task)
+                                stories[task.type].tasks.push(task)
+                            } else // it's linked to a user story
+                            {
+                                if (typeof (stories[task.parentStory.id]) != 'undefined') // it is one of the stories we kept for display
+                                {
+                                    stories[task.parentStory.id].tasks.push(task)
+                                }
                             }
                         }
                     })
