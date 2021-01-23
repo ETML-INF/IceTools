@@ -12,8 +12,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
 
-    <script src='config.js'></script>
-    <script src='_icescrum_api_token.js'></script>
+    <script src='_icescrum_api.js'></script>
     <style>
         #spinner {
             width: 80px;
@@ -33,26 +32,27 @@
 </head>
 <body>
 <div class="pl-5 m-2 mt-4 text-center">
-    <h1>Projet <span id="spnProjName">?</span></h1>
-    <div class="small">Unité de temps: <span id="spnTUnit"></span></div>
-    <div id="divBadConfig" class="container d-none text-left">
-        <p>Cette page est mal configurée, voici ce que vous devez vérifier:</p>
+    <h1 id="spnProjName"></h1>
+    <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
+        <h3>Cette page est mal configurée!!</h3>
+        <p>Vérifiez que vous avez créé le fichier <span class="code">_icescrum_api.js</span> qui contient:
         <ol>
             <li>
-                Le fichier <span class="code">config.js</span> initialise correctement les trois variables suivantes
-                <ul>
-                    <li><span class="code">projectId = 'XXXXXXX'</span> doit contenir le code Icescrum de votre projet. Vous la trouvez dans l'url quand vous êtes sur votre projet dans Icescrum</li>
-                    <li><span class="code">team = ["Pierrette", "Paul", "Jean"]</span> la liste des prénoms des personnes participant au projet</li>
-                    <li><span class="code">timeUnit = "min"</span> l'unité de temps que vous utilisez avec le TimeTracking</li>
-                </ul>
+                Votre token d'accès à l'API Icescrum.
+                <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
+                <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil ("My Account") sous l'onglet 'API token'</p>
             </li>
             <li>
-                Vous avez créé le fichier <span class="code">_icescrum_api_token.js</span> qui contient votre token d'API Icescrum<br>
-                <span class="code">var iceScrumToken = '91030e0ea9a9ab58cbacbf399de65ff21'</span><br>
-                Vous retrouvez votre token dans votre profil ("My Account") sous l'onglet 'API token'<br>
-                <span style="font-weight: bolder">Attention: </span> veillez à ce que ce fichier soit exclu du système de versionning !...
+                Le code Icescrum de votre projet:
+                <span class="code">projectId = 'XXXXXXX'</span>
+                <p class="small text-secondary">Vous le trouvez dans l'url quand vous êtes sur votre projet dans Icescrum</p>
             </li>
         </ol>
+        <p>Veillez également à ce que le fichier <span class="code">_icescrum_api.js</span>:</p>
+        <ul>
+            <li>Soit exclu du système de versionning</li>
+            <li>Se trouve dans le même dossier que cette page</li>
+        </ul>
     </div>
     <div id="spnLoading">
         <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
@@ -61,7 +61,7 @@
 <div id="divContent" class="d-none">
 
     <div id="output" style="margin: 30px;"></div>
-    <div style="font-size: x-small">Powered by <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
+    <div style="font-size: x-small">Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
 
 </div>
 </body>
@@ -74,7 +74,7 @@
     var projectSprints
 
     // Configuration check
-    if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined' && typeof (timeUnit) !== 'undefined')
+    if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined')
     {
         var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
         loadData()
@@ -84,14 +84,11 @@
         spnLoading.classList.add('d-none')
     }
 
-    // Unit in title
-    spnTUnit.innerText = timeUnit
-
     // Project name
     fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
         return response.json()
     }).then(function (data) {
-        spnProjName.innerText = data.name
+        spnProjName.innerText = 'Projet '+data.name
     })
 
     // Business stuff....
@@ -159,7 +156,8 @@
                     return response.json()
                 }).then(function (data) {
                     data.forEach(function (task) {
-                        if (task.doneDate) {
+                        if (task.doneDate)
+                        {
                             if (task.type == 10 || task.type == 11) // task is urgent or recurrent
                             {
                                 stories[task.type].tasks.push(task)
@@ -191,12 +189,18 @@
         })
     }
 
+    /**
+     * Provide a 2D array of all tasks of the project. This array is meant to be fed into the pivottable plugin (see credit)
+     * @param stories
+     * @returns {[]}
+     */
     function extractpivotdata(stories)
     {
         res = []
         stories.forEach(function (story) {
             story.tasks.forEach(function (task) {
-                if (task.tags.length == 0) {
+                if (task.tags.length == 0)
+                { // no tags -> one row without column tag for this task
                     res.push({
                         task: task.name,
                         story: story.name,
@@ -210,8 +214,9 @@
                         value: story.value,
                         date: task.doneDate ? task.doneDate.substring(0, 10) : ''
                     })
-                } else {
-                    task.tags.forEach(function (tag) {
+                } else
+                {
+                    task.tags.forEach(function (tag) { // one row for each tag for this task
                         res.push({
                             task: task.name,
                             story: story.name,
