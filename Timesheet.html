@@ -36,17 +36,17 @@
     <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
         <h3>Cette page est mal configurée!!</h3>
         <p>Vérifiez que vous avez créé le fichier <span class="code">_icescrum_api.js</span> qui contient:
-        <ol>
-            <li>
-                Votre token d'accès à l'API Icescrum.
-                <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
-                <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil ("My Account") sous l'onglet 'API token'</p>
-            </li>
-            <li>
-                Le code Icescrum de votre projet:
-                <span class="code">projectId = 'XXXXXXX'</span>
-                <p class="small text-secondary">Vous le trouvez dans l'url quand vous êtes sur votre projet dans Icescrum</p>
-            </li>
+            <ol>
+                <li>
+                    Votre token d'accès à l'API Icescrum.
+                    <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
+        <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil ("My Account") sous l'onglet 'API token'</p>
+        </li>
+        <li>
+            Le code Icescrum de votre projet:
+            <span class="code">projectId = 'XXXXXXX'</span>
+            <p class="small text-secondary">Vous le trouvez dans l'url quand vous êtes sur votre projet dans Icescrum</p>
+        </li>
         </ol>
         <p>Veillez également à ce que le fichier <span class="code">_icescrum_api.js</span>:</p>
         <ul>
@@ -87,100 +87,50 @@
     fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
         return response.json()
     }).then(function (data) {
-        spnProjName.innerText = 'Projet '+data.name
+        spnProjName.innerText = 'Projet ' + data.name
     })
-
-    // Business stuff....
-    function showData(table, tasks)
-    {
-        table.innerHTML = ''
-        tasks.forEach(function (task) {
-            let d = new Date(task.lastUpdated)
-            date = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' ' + d.getHours() + ':' + d.getMinutes()
-            switch (task.type)
-            {
-                case 10:
-                    storyName = 'Urgente'
-                    break;
-                case 11:
-                    storyName = 'Récurrente'
-                    break;
-                default:
-                    storyName = task.parentStory.name
-            }
-
-            tr = document.createElement('tr')
-            c = document.createElement('td') // Story
-            c.innerText = storyName
-            tr.appendChild(c)
-            c = document.createElement('td') // Task
-            c.innerText = task.name
-            tr.appendChild(c)
-            c = document.createElement('td') // Date
-            c.innerText = date
-            tr.appendChild(c)
-            c = document.createElement('td') // Time spent
-            c.innerText = task.spent
-            tr.appendChild(c)
-            c = document.createElement('td') // Filter-specific data
-            c.innerText = task.data
-            tr.appendChild(c)
-            table.appendChild(tr)
-        })
-    }
 
     function loadData()
     {
         let stories = [] // the stories of the project
         stories[10] = {name: '(Urgentes)', tasks: []}
         stories[11] = {name: '(Récurrentes)', tasks: []}
-        let sprints = [] // the sprints of the project
-        // First get all sprints
-        fetch(API_base_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+        fetch(API_base_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (data) {
-            data.forEach(function (sprint) {
-                sprints[sprint.id] = {number: sprint.orderNumber, release: sprint.parentRelease.name}
+            data.forEach(function (story) {
+                stories[story.id] = {name: story.name, type: story.type, effort: story.effort, value: story.value, tasks: []}
             })
-            projectSprints = sprints
-        }).then(function () { // get stories
-            fetch(API_base_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
+        }).then(function () { // get all tasks
+            fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
                 return response.json()
             }).then(function (data) {
-                data.forEach(function (story) {
-                    stories[story.id] = {name: story.name, type: story.type, effort: story.effort, value: story.value, tasks: []}
-                })
-            }).then(function () { // get all tasks
-                fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
-                    return response.json()
-                }).then(function (data) {
-                    data.forEach(function (task) {
-                        if (task.doneDate)
+                data.forEach(function (task) {
+                    if (task.doneDate)
+                    {
+                        if (task.type == 10 || task.type == 11) // task is urgent or recurrent
                         {
-                            if (task.type == 10 || task.type == 11) // task is urgent or recurrent
+                            stories[task.type].tasks.push(task)
+                        } else // it's linked to a user story
+                        {
+                            if (typeof (stories[task.parentStory.id]) != 'undefined') // it is one of the stories we kept for display
                             {
-                                stories[task.type].tasks.push(task)
-                            } else // it's linked to a user story
-                            {
-                                if (typeof (stories[task.parentStory.id]) != 'undefined') // it is one of the stories we kept for display
-                                {
-                                    stories[task.parentStory.id].tasks.push(task)
-                                }
+                                stories[task.parentStory.id].tasks.push(task)
                             }
                         }
-                    })
-                }).then(function () { // show tasks
-                    var pivotdata = extractpivotdata(stories)
-                    $("#output").pivotUI(pivotdata,
-                        {
-                            rows: ["date", "story", "task"],
-                            cols: ["owner"]
-                        }
-                    );
-                    projectStories = stories
-                    spnLoading.classList.add('d-none')
-                    divContent.classList.remove('d-none')
+                    }
                 })
+            }).then(function () { // show tasks
+                var pivotdata = extractpivotdata(stories)
+                $("#output").pivotUI(pivotdata,
+                    {
+                        rows: ["date", "story", "task"],
+                        cols: ["owner"]
+                    }
+                );
+                projectStories = stories
+                spnLoading.classList.add('d-none')
+                divContent.classList.remove('d-none')
             })
         }).catch(function (erreur) {
             alert("Erreur de connexion au serveur IceScrum\n\nSi vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur, alors c'est probablement que votre token est pourri")
