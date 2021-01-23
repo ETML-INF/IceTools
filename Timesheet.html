@@ -58,12 +58,8 @@
         <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
     </div>
 </div>
-<div id="divContent" class="d-none">
-
-    <div id="output" style="margin: 30px;"></div>
-    <div style="font-size: x-small">Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
-
-</div>
+<div id="output" style="margin: 30px;"></div>
+<div style="font-size: x-small">Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
 </body>
 </html>
 <script>
@@ -92,14 +88,19 @@
 
     function loadData()
     {
-        let stories = [] // the stories of the project
+        let tasks = [] // all tasks, including urgent and recurrent ones. Tasks will be duplicated if they have multiple tags (one instance per tag value)
+        let stories = [] // the stories of the project. We need them in order to get their type and value that are not in the task's parent story
+        // story-less tasks:
         stories[10] = {name: '(Urgentes)', tasks: []}
         stories[11] = {name: '(Récurrentes)', tasks: []}
+
+        // Get all stories
         fetch(API_base_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (data) {
             data.forEach(function (story) {
-                stories[story.id] = {name: story.name, type: story.type, effort: story.effort, value: story.value, tasks: []}
+                // use id as index for easy find
+                stories[story.id] = {name: story.name, type: story.type == 0 ? 'user' : (story.type == 3 ? 'tech' : 'rec/urg'), value: story.value}
             })
         }).then(function () { // get all tasks
             fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
@@ -107,30 +108,18 @@
             }).then(function (data) {
                 data.forEach(function (task) {
                     if (task.doneDate)
-                    {
-                        if (task.type == 10 || task.type == 11) // task is urgent or recurrent
-                        {
-                            stories[task.type].tasks.push(task)
-                        } else // it's linked to a user story
-                        {
-                            if (typeof (stories[task.parentStory.id]) != 'undefined') // it is one of the stories we kept for display
-                            {
-                                stories[task.parentStory.id].tasks.push(task)
-                            }
-                        }
+                    {// we don't track the tasks in the future and in progress
+                        tasks.push(...prepareTask(task,stories)) // must spread before pushing, otherwise we build an array of array of objects (try it if you don't believe it)
                     }
                 })
-            }).then(function () { // show tasks
-                var pivotdata = extractpivotdata(stories)
-                $("#output").pivotUI(pivotdata,
+            }).then(function () { // feed those tasks to the pivot table
+                $("#output").pivotUI(tasks,
                     {
                         rows: ["date", "story", "task"],
                         cols: ["owner"]
                     }
                 );
-                projectStories = stories
-                spnLoading.classList.add('d-none')
-                divContent.classList.remove('d-none')
+                spnLoading.classList.add('d-none') // spinner off
             })
         }).catch(function (erreur) {
             alert("Erreur de connexion au serveur IceScrum\n\nSi vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur, alors c'est probablement que votre token est pourri")
@@ -139,51 +128,48 @@
     }
 
     /**
-     * Provide a 2D array of all tasks of the project. This array is meant to be fed into the pivottable plugin (see credit)
-     * @param stories
+     * Returns an array of task objects. The array will have 1 task if the task has no tag or just one:  "tags": [],  or "tags": ["Ajax"]"
+     * It will have one item per tag value if threr are more: "tags": ["Ajax","forlater"]"
+     * @param task : the task received from the API
+     * @param stories : contains things that are not in task.parentStory
      * @returns {[]}
      */
-    function extractpivotdata(stories)
+    function prepareTask(task,stories)
     {
         res = []
-        stories.forEach(function (story) {
-            story.tasks.forEach(function (task) {
-                if (task.tags.length == 0)
-                { // no tags -> one row without column tag for this task
-                    res.push({
-                        task: task.name,
-                        story: story.name,
-                        release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
-                        sprint: task.sprint.index,
-                        owner: task.responsible ? task.responsible.firstName : '',
-                        initial_planned_time: task.initial,
-                        spent_time: task.spent,
-                        type: story.type == 0 ? 'user' : (story.type == 3 ? 'tech' : 'rec/urg'),
-                        effort: story.effort,
-                        value: story.value,
-                        date: task.doneDate ? task.doneDate.substring(0, 10) : ''
-                    })
-                } else
-                {
-                    task.tags.forEach(function (tag) { // one row for each tag for this task
-                        res.push({
-                            task: task.name,
-                            story: story.name,
-                            release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
-                            sprint: task.sprint.index,
-                            owner: task.responsible ? task.responsible.firstName : '',
-                            initial_planned_time: task.initial,
-                            spent_time: task.spent,
-                            type: story.type == 0 ? 'user' : (story.type == 3 ? 'tech' : 'rec/urg'),
-                            effort: story.effort,
-                            tag: tag,
-                            value: story.value,
-                            date: task.doneDate ? task.doneDate.substring(0, 10) : ''
-                        })
-                    })
-                }
+
+        // determine story name
+        storyname = '?'
+        if (task.type == 10) storyname = 'Urgente'
+        if (task.type == 11) storyname = 'Récurrente'
+        if (task.parentStory) storyname = task.parentStory.name
+
+        base = {
+            task: task.name,
+            story: storyname,
+            release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
+            sprint: task.sprint.index,
+            owner: task.responsible ? task.responsible.firstName : '',
+            initial_planned_time: task.initial,
+            spent_time: task.spent,
+            story_type: task.parentStory ? stories[task.parentStory.id].type : 'rec/urg',
+            effort: task.parentStory ? task.parentStory.effort : 0,
+            value: task.parentStory ? stories[task.parentStory.id].value : 0,
+            date: task.doneDate.substring(0, 10)
+        }
+
+        // let's work on those tags now
+        if (task.tags.length == 0)
+        { // no tags -> one row without column tag for this task
+            res.push(base)
+        } else
+        {
+            task.tags.forEach(function (tag) { // one row for each tag for this task
+                taginstance = {...base} // build a clone
+                taginstance.tag = tag
+                res.push(taginstance)
             })
-        })
+        }
         return res
     }
 
