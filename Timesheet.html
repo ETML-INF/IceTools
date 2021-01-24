@@ -119,7 +119,7 @@
                 spnLoading.classList.add('d-none') // spinner off
             })
         }).catch(function (erreur) {
-            alert("Erreur de connexion au serveur IceScrum\n\nSi vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur, alors c'est probablement que votre token est pourri")
+            alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
             window.close()
         })
     }
