@@ -34,25 +34,22 @@
 <div class="pl-5 m-2 mt-4 text-center">
     <h1 id="spnProjName"></h1>
     <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
-        <h3>Cette page est mal configurée!!</h3>
-        <p>Vérifiez que vous avez créé le fichier <span class="code">_icescrum_api.js</span> qui contient:
+        <h3>Oooops!!</h3>
+        <p>Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour fonctionner.</p>
+        <p>Il faut que le dossier dans lequel est ce fichier contienne également un fichier nommé <span class="code">_icescrum_apis.js</span> dans lequel vous devez mettre:
             <ol>
                 <li>
                     Votre token d'accès à l'API Icescrum.
                     <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
-        <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil ("My Account") sous l'onglet 'API token'</p>
+        <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'</p>
         </li>
         <li>
             Le code Icescrum de votre projet:
             <span class="code">projectId = 'XXXXXXX'</span>
-            <p class="small text-secondary">Vous le trouvez dans l'url quand vous êtes sur votre projet dans Icescrum</p>
+            <p class="small text-secondary">Vous trouverez ce code dans l'url quand vous êtes sur votre projet dans Icescrum</p>
         </li>
         </ol>
-        <p>Veillez également à ce que le fichier <span class="code">_icescrum_api.js</span>:</p>
-        <ul>
-            <li>Soit exclu du système de versionning</li>
-            <li>Se trouve dans le même dossier que cette page</li>
-        </ul>
+        <p>Veillez également à ce que le fichier <span class="code">_icescrum_apis.js</span> soit exclu du système de versionning, si vous ne voulez pas que votre token se retrouve sur Github!</p>
     </div>
     <div id="spnLoading">
         <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
