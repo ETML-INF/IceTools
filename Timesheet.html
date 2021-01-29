@@ -142,17 +142,17 @@
         if (task.parentStory) storyname = task.parentStory.name
 
         base = {
-            task: task.name,
+            tâche: task.name,
             story: storyname,
             release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
             sprint: task.sprint.index,
             owner: task.responsible ? task.responsible.firstName : '',
-            initial_planned_time: task.initial,
-            spent_time: task.spent,
-            story_type: task.parentStory ? stories[task.parentStory.id].type : 'rec/urg',
-            effort: task.parentStory ? task.parentStory.effort : 0,
+            temps: task.spent,
+            type_story: task.parentStory ? stories[task.parentStory.id].type : 'rec/urg',
+            effort_estimé: task.parentStory ? task.parentStory.effort : 0,
             value: task.parentStory ? stories[task.parentStory.id].value : 0,
-            date: task.doneDate.substring(0, 10)
+            date: task.doneDate.substring(0, 10),
+            semaine: getNumberOfWeek(task.doneDate.substring(0, 10))
         }
 
         // let's work on those tags now
@@ -168,6 +168,19 @@
             })
         }
         return res
+    }
+
+    /**
+     * return the week number in format YYWW
+     * credit to https://stackoverflow.com/questions/8224459/how-to-create-a-date-object-from-string-in-javascript
+     * @param date
+     * @returns {number}
+     */
+    function getNumberOfWeek(date) {
+        date = new Date(Date.parse(date))
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        return 100*(date.getFullYear()%100)+Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     }
 
 </script>
