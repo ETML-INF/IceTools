@@ -78,6 +78,7 @@
         return response.json()
     }).then(function (data) {
         spnProjName.innerText = 'Projet ' + data.name
+        document.title = 'Projet ' + data.name
     })
 
     function loadData()
