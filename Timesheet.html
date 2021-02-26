@@ -128,10 +128,18 @@
                     }
                 })
             }).then(function () { // feed those tasks to the pivot table
+                // Find surprise tasks, i.e: tasks that were created AFTER some tasks were already completed in this story
+                tasks.forEach(function (task) {
+                    if (task.story_id > 0) {
+                        if (task.date_created > storyStarts[task.story_id]) {
+                            console.log('surprise:', task)
+                        }
+                    }
+                })
                 $("#output").pivotUI(tasks,
                     {
                         rows: ["date_de_fin", "story", "tâche"],
-                        cols: ["owner"]
+                        cols: ["effectuée_par"]
                     }
                 );
                 spnLoading.classList.add('d-none') // spinner off
@@ -162,15 +170,17 @@
         base = {
             tâche: task.name,
             story: storyname,
+            story_id: task.parentStory ? task.parentStory.id : 0,
             release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
             sprint: task.sprint.index,
-            owner: task.responsible ? task.responsible.firstName : '',
+            effectuée_par: task.responsible ? task.responsible.firstName : '',
             temps_effectif_tâche: task.spent,
             temps_estimé_tâche: task.initial,
             type_story: task.parentStory ? stories[task.parentStory.id].type : 'rec/urg',
             effort_estimé_story: task.parentStory ? task.parentStory.effort : 0,
             value: task.parentStory ? stories[task.parentStory.id].value : 0,
             date_de_fin: task.doneDate.substring(0, 10),
+            date_created: task.dateCreated,
             semaine: getNumberOfWeek(task.doneDate.substring(0, 10))
         }
 
