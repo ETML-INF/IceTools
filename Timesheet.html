@@ -127,15 +127,20 @@
                         tasks.push(...prepareTaskForPivot(task, stories)) // must spread before pushing, otherwise we build an array of array of objects (try it if you don't believe it)
                     }
                 })
-            }).then(function () { // feed those tasks to the pivot table
-                // Find surprise tasks, i.e: tasks that were created AFTER some tasks were already completed in this story
+            }).then(function () {
+                // compute additional fields
                 tasks.forEach(function (task) {
-                    if (task.story_id > 0) {
-                        if (task.date_created > storyStarts[task.story_id]) {
-                            task.surprise = true
-                        }
+                    // tag bad estimates
+                    let ratio = task.temps_effectif_tâche / task.temps_estimé_tâche
+                    task.facile = ratio < 0.5
+                    task.durdur = ratio > 1.5
+
+                    if (task.story_id > 0)
+                    {
+                        task.surprise = task.date_created > storyStarts[task.story_id] // task was a surprise if it was created AFTER some tasks were already completed in this story
                     }
                 })
+                // now feed those tasks to the pivot table
                 $("#output").pivotUI(tasks,
                     {
                         rows: ["date_de_fin", "story", "tâche"],
