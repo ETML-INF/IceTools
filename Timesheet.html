@@ -132,7 +132,7 @@
                 tasks.forEach(function (task) {
                     if (task.story_id > 0) {
                         if (task.date_created > storyStarts[task.story_id]) {
-                            console.log('surprise:', task)
+                            task.surprise = true
                         }
                     }
                 })
