@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tests</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+    <script src='_icescrum_api.js'></script>
+    <script src="https://momentjs.com/downloads/moment.js"></script>
+    <style>
+        #spinner {
+            width: 80px;
+            height: 80px;
+            left: 0px;
+            top: 0px;
+            opacity: 1;
+        }
+
+        .code {
+            font-family: "Courier New";
+            font-weight: bolder;
+            padding: 4px;
+            margin: 2px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="pl-5 m-2 mt-4 text-center">
+    <h1 id="spnProjName"></h1>
+    <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
+        <h3>Oooops!!</h3>
+        <p>Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour fonctionner.</p>
+        <p>Vous devez créer un fichier nommé <span class="code">_icescrum_api.js</span> dans le dossier où se trouve <span class="code">Timesheet.html</span></p>
+        <p>Dans ce fichier, vous devez mettre:</p>
+        <ol>
+            <li>
+                Votre token d'accès à l'API Icescrum. Cela donne quelque chose genre:
+                <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
+                <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'</p>
+            </li>
+            <li>
+                Le code Icescrum de votre projet, genre:
+                <span class="code">projectId = 'XXXXXX'</span>
+                <p class="small text-secondary">Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)</p>
+            </li>
+        </ol>
+        <p>Attention: ajoutez <span class="code">*_icescrum_api*</span> dans le fichier <span class="code">.gitignore</span> de votre repository.</p>
+        <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
+    </div>
+    <div id="spnLoading">
+        <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
+    </div>
+</div>
+<div id="output" style="margin: 30px;"></div>
+</body>
+</html>
+<script>
+
+    // ============ Initialization =================
+    // Configuration check
+    if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined')
+    {
+        var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
+        loadData()
+    } else
+    {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    }
+
+    // Project name
+    fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
+        return response.json()
+    }).then(function (data) {
+        spnProjName.innerText = 'Les tests du projet ' + data.name
+        document.title = 'Projet ' + data.name
+    })
+
+    moment.locale();
+    async function loadData()
+    {
+        // Get all sprints
+        await fetch(API_base_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(async function (sprints) {
+            for (sprint of sprints)
+            {
+                let sprintdiv = document.createElement('div')
+                sprintdiv.innerHTML = "<h3>Sprint " + sprint.orderNumber + "</h3>"
+                sprintdiv.title = sprint.goal
+                sprintdiv.classList.add('row', 'text-center', 'bg-secondary', 'p-3', 'title')
+                output.appendChild(sprintdiv)
+                for (story_id of sprint.stories_ids)
+                {
+                    let storydiv = document.createElement('div')
+                    await fetch(API_base_url + '/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
+                        return response.json()
+                    }).then(async function (story) {
+                        storydiv.innerHTML = "<h5>Story: " + story.name + "</h5>"
+                        storydiv.title = story.description
+                        storydiv.classList.add('row', 'text-center', 'bg-light', 'p-3')
+                        output.appendChild(storydiv)
+                        await fetch(API_base_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
+                            return response.json()
+                        }).then(function (tests) {
+                            for (test of tests)
+                            {
+                                let tr = document.createElement('div')
+                                tr.classList.add('row')
+                                output.appendChild(tr)
+                                let td = document.createElement('div')
+                                td.innerText = test.name
+                                td.classList.add('col-2')
+                                tr.appendChild(td)
+                                td = document.createElement('div')
+                                td.innerText = test.description
+                                td.classList.add('col-9')
+                                tr.appendChild(td)
+                                td = document.createElement('div')
+                                td.classList.add('col-1')
+                                switch (test.state)
+                                {
+                                    case 10:
+                                        td.innerHTML = 'OK<br><small>'+ moment(test.lastUpdated).format("D MMM")+"</small>"
+                                        td.classList.add('font-weight-bold', 'bg-success','text-center')
+                                        break;
+                                    case 5:
+                                        td.innerHTML = 'ko<br><small>'+ moment(test.lastUpdated).format("D MMM")+"</small>"
+                                        td.classList.add('bg-danger','text-center')
+                                        break;
+                                    default:
+                                        td.innerText = '?'
+                                        td.classList.add('bg-light','text-center')
+                                }
+                                tr.appendChild(td)
+                            }
+                        }).catch(function (err) {
+                            console.log(err)
+                        })
+                    }).catch(function (err) {
+                        console.log(err)
+                    })
+                }
+            }
+            spnLoading.classList.add('d-none')
+        }).catch(function (erreur) {
+            alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
+            //window.close()
+        })
+    }
+
+</script>
