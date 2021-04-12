@@ -62,7 +62,7 @@
     if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined')
     {
         var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
-        loadData()
+        appendContent(output)
     } else
     {
         divBadConfig.classList.remove('d-none')
@@ -78,76 +78,89 @@
     })
 
     moment.locale();
-    async function loadData()
+
+    async function appendContent(output)
     {
         // Get all sprints
         await fetch(API_base_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
-        }).then(async function (sprints) {
-            for (sprint of sprints)
-            {
-                let sprintdiv = document.createElement('div')
-                sprintdiv.innerHTML = "<h3>Sprint " + sprint.orderNumber + "</h3>"
-                sprintdiv.title = sprint.goal
-                sprintdiv.classList.add('row', 'text-center', 'bg-secondary', 'p-3', 'title')
-                output.appendChild(sprintdiv)
-                for (story_id of sprint.stories_ids)
-                {
-                    let storydiv = document.createElement('div')
-                    await fetch(API_base_url + '/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
-                        return response.json()
-                    }).then(async function (story) {
-                        storydiv.innerHTML = "<h5>Story: " + story.name + "</h5>"
-                        storydiv.title = story.description
-                        storydiv.classList.add('row', 'text-center', 'bg-light', 'p-3')
-                        output.appendChild(storydiv)
-                        await fetch(API_base_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
-                            return response.json()
-                        }).then(function (tests) {
-                            for (test of tests)
-                            {
-                                let tr = document.createElement('div')
-                                tr.classList.add('row')
-                                output.appendChild(tr)
-                                let td = document.createElement('div')
-                                td.innerText = test.name
-                                td.classList.add('col-2')
-                                tr.appendChild(td)
-                                td = document.createElement('div')
-                                td.innerText = test.description
-                                td.classList.add('col-9')
-                                tr.appendChild(td)
-                                td = document.createElement('div')
-                                td.classList.add('col-1')
-                                switch (test.state)
-                                {
-                                    case 10:
-                                        td.innerHTML = 'OK<br><small>'+ moment(test.lastUpdated).format("D MMM")+"</small>"
-                                        td.classList.add('font-weight-bold', 'bg-success','text-center')
-                                        break;
-                                    case 5:
-                                        td.innerHTML = 'ko<br><small>'+ moment(test.lastUpdated).format("D MMM")+"</small>"
-                                        td.classList.add('bg-danger','text-center')
-                                        break;
-                                    default:
-                                        td.innerText = '?'
-                                        td.classList.add('bg-light','text-center')
-                                }
-                                tr.appendChild(td)
-                            }
-                        }).catch(function (err) {
-                            console.log(err)
-                        })
-                    }).catch(function (err) {
-                        console.log(err)
-                    })
-                }
+        })
+            .then((data) => appendSprints(data,output))
+            .catch(function (erreur) {
+                alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
+                window.close()
+            })
+    }
+
+    async function appendSprints(sprints,output)
+    {
+        for (sprint of sprints)
+        {
+            let sprintdiv = document.createElement('div')
+            sprintdiv.innerHTML = "<h3>Sprint " + sprint.orderNumber + "</h3>"
+            sprintdiv.title = sprint.goal
+            sprintdiv.classList.add('row', 'text-center', 'bg-secondary', 'p-3', 'title')
+            output.appendChild(sprintdiv)
+            for (story_id of sprint.stories_ids) {
+                await appendStory(story_id.id,output)
             }
-            spnLoading.classList.add('d-none')
-        }).catch(function (erreur) {
-            alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
-            //window.close()
+        }
+        spnLoading.classList.add('d-none')
+    }
+
+    async function appendStory(storyid,output)
+    {
+        let storydiv = document.createElement('div')
+        await fetch(API_base_url + '/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(async function (story) {
+            storydiv.innerHTML = "<h5>Story: " + story.name + "</h5>"
+            storydiv.title = story.description
+            storydiv.classList.add('row', 'text-center', 'bg-light', 'p-3')
+            output.appendChild(storydiv)
+            await appendTests(storyid,output)
+        }).catch(function (err) {
+            console.log(err)
         })
     }
 
+    async function appendTests(storyid,output) {
+        await fetch(API_base_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(function (tests) {
+            for (test of tests)
+            {
+                let tr = document.createElement('div')
+                tr.classList.add('row')
+                output.appendChild(tr)
+                let td = document.createElement('div')
+                td.innerText = test.name
+                td.classList.add('col-2')
+                tr.appendChild(td)
+                td = document.createElement('div')
+                td.innerText = test.description
+                td.classList.add('col-9')
+                tr.appendChild(td)
+                td = document.createElement('div')
+                td.classList.add('col-1')
+                switch (test.state)
+                {
+                    case 10:
+                        td.innerHTML = 'OK<br><small>' + moment(test.lastUpdated).format("D MMM") + "</small>"
+                        td.classList.add('font-weight-bold', 'bg-success', 'text-center')
+                        break;
+                    case 5:
+                        td.innerHTML = 'ko<br><small>' + moment(test.lastUpdated).format("D MMM") + "</small>"
+                        td.classList.add('bg-danger', 'text-center')
+                        break;
+                    default:
+                        td.innerText = '?'
+                        td.classList.add('bg-light', 'text-center')
+                }
+                tr.appendChild(td)
+            }
+        }).catch(function (err) {
+            console.log(err)
+        })
+    }
 </script>
