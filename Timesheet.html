@@ -225,7 +225,8 @@
             value: task.parentStory ? stories[task.parentStory.id].value : 0,
             date_de_fin: task.doneDate ? task.doneDate.substring(0, 10) : '?',
             date_created: task.dateCreated,
-            semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : '?'
+            semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : '?',
+            remarque: task.notes ? task.notes : ''
         }
 
         // let's work on those tags now
