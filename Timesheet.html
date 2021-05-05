@@ -144,7 +144,6 @@
             fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
                 return response.json()
             }).then(function (data) {
-                console.log(data)
                 data.forEach(function (task) {
                     // Determine the actual start of work on the story
                     if (task.parentStory && task.inProgressDate)
@@ -186,6 +185,8 @@
                         cols: ["effectuée_par"]
                     }
                 );
+
+                printSetup()
                 spnLoading.classList.add('d-none') // spinner off
             })
         }).catch(function (erreur) {
@@ -257,5 +258,18 @@
         const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
         return 100 * (date.getFullYear() % 100) + Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     }
+
+    /**
+     * Add the class d-print-none to all elements of the pivot table that we don't want to see on the printed page
+     */
+    function printSetup()
+    {
+        ['pvtAxisContainer', 'pvtRenderer', 'pvtUiCell', 'btn'].forEach(function (classname) {
+            $("." + classname).each(function (index, element) {
+                element.classList.add('d-print-none')
+            })
+        })
+    }
+
 
 </script>
