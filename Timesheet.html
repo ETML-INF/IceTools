@@ -61,6 +61,7 @@
                                 <li>'facile' est vrai pour une tâche qui a pris moins de la moitié du temps initialement estimé</li>
                                 <li>'durdur' est vrai pour une tâche dont le temps effectif est plus d'une fois et demi le temps initialement estimé</li>
                                 <li>'surprise' est vrai pour une tâche qui a été créée après qu'au moins une tâche de la story a été terminée</li>
+                                <li>Dans le cas où vous avez mis plusieurs tags sur la tâche, 'tag' ne contiendra que le tout premier</li>
                             </ul>
                         </li>
                     </ul>
@@ -97,7 +98,7 @@
     </div>
 </div>
 <div id="output" style="margin: 30px;"></div>
-<div style="font-size: x-small">Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
+<div style="font-size: x-small">V1.5.1, Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
 </body>
 </html>
 <script>
@@ -129,8 +130,8 @@
         let storyStarts = [] // the date at which the work has started on this story. Can't use story.inProgressDate, which is the date when the task was placed in the sprint backlog
 
         // story-less tasks:
-        stories[10] = {name: '(Urgentes)', tasks: []}
-        stories[11] = {name: '(Récurrentes)', tasks: []}
+        stories[10] = {name: '(Récurrentes)', tasks: []}
+        stories[11] = {name: '(Urgentes)', tasks: []}
 
         // Get all stories
         fetch(API_base_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
@@ -181,8 +182,8 @@
                 // now feed those tasks to the pivot table
                 $("#output").pivotUI(tasks,
                     {
-                        rows: ["story", "tâche"],
-                        cols: ["effectuée_par"]
+                        rows: ["story", "tâche", "remarque"],
+                        cols: []
                     }
                 );
 
@@ -208,40 +209,31 @@
 
         // determine story name
         storyname = '?'
-        if (task.type == 10) storyname = 'Urgente'
-        if (task.type == 11) storyname = 'Récurrente'
+        if (task.type == 10) storyname = 'Récurrente'
+        if (task.type == 11) storyname = 'Urgente'
         if (task.parentStory) storyname = task.parentStory.name
 
-        base = {
-            tâche: task.name,
-            story: storyname,
-            // story_id: task.parentStory ? task.parentStory.id : 0,
-            // release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
-            sprint: task.sprint.index,
-            effectuée_par: task.responsible ? task.responsible.firstName : '',
-            temps_effectif: task.spent ? task.spent : '',
-            temps_estimé: task.initial ? task.initial : '',
-            type_story: task.parentStory ? stories[task.parentStory.id].type : 'rec/urg',
-            // effort_estimé_story: task.parentStory ? task.parentStory.effort : 0,
-            // value: task.parentStory ? stories[task.parentStory.id].value : 0,
-            terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : '?',
-            // date_created: task.dateCreated,
-            semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : '?',
-            remarque: task.notes ? task.notes : ''
-        }
+        res.push(
+            {
+                tâche: task.name,
+                story: storyname,
+                // story_id: task.parentStory ? task.parentStory.id : 0,
+                // release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
+                sprint: task.sprint.index,
+                effectuée_par: task.responsible ? task.responsible.firstName : '',
+                temps_effectif: task.spent ? task.spent : '',
+                temps_estimé: task.initial ? task.initial : '',
+                type_story: task.parentStory ? stories[task.parentStory.id].type : 'rec/urg',
+                // effort_estimé_story: task.parentStory ? task.parentStory.effort : 0,
+                // value: task.parentStory ? stories[task.parentStory.id].value : 0,
+                terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : '?',
+                // date_created: task.dateCreated,
+                semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : '?',
+                remarque: task.notes ? task.notes : '',
+                tag: task.tags.length == 0 ? '' : task.tags[0] // only one tag can be taken into account
+            }
+        )
 
-        // let's work on those tags now
-        if (task.tags.length == 0)
-        { // no tags -> one row without column tag for this task
-            res.push(base)
-        } else
-        {
-            task.tags.forEach(function (tag) { // one row for each tag for this task
-                taginstance = {...base} // build a clone
-                taginstance.tag = tag
-                res.push(taginstance)
-            })
-        }
         return res
     }
 
