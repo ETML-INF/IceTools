@@ -41,8 +41,8 @@
                 <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'</p>
             </li>
             <li>
-                Le code Icescrum de votre projet, genre:
-                <span class="code">projectId = 'XXXXXX'</span>
+                Un tableau contenant les codes Icescrum des projets que vous voulez suivre, genre:
+                <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
                 <p class="small text-secondary">Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)</p>
             </li>
         </ol>
@@ -54,6 +54,7 @@
     </div>
 </div>
 <div id="output" style="margin: 30px;"></div>
+<div style="font-size: x-small">V2.0</div>
 </body>
 </html>
 <script>
@@ -63,26 +64,31 @@
     const API_base_url = 'https://icescrum.cpnv.ch/ws/project/'
     var API_project_url
 
-    selProj.addEventListener('change', loadProject)
-    document.addEventListener('DOMContentLoaded', function() {
-        // Configuration check
-        console.log('loading'+selProj.value)
-        if (typeof (iceScrumToken) !== 'undefined' && typeof (projectIds) !== 'undefined')
-        {
-            for (projectId of projectIds) {
-                let opt=document.createElement('option')
-                opt.text = projectId
-                opt.value = projectId
-                selProj.appendChild(opt)
-            }
-            console.log('loading'+selProj.value)
-            loadProject()
-        } else
-        {
-            divBadConfig.classList.remove('d-none')
-            spnLoading.classList.add('d-none')
+    // Init dropdown list from either an array of project IDs or a single ID
+    if (typeof (iceScrumToken) == 'undefined')
+    {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    } else if (typeof (projectIds) !== 'undefined') {
+        for (projectId of projectIds) {
+            let opt=document.createElement('option')
+            opt.text = projectId
+            opt.value = projectId
+            selProj.appendChild(opt)
         }
-    })
+        loadProject()
+    } else if (typeof (projectId) !== 'undefined') {
+        let opt=document.createElement('option')
+        opt.text = projectId
+        opt.value = projectId
+        selProj.appendChild(opt)
+        loadProject()
+    } else {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    }
+
+    selProj.addEventListener('change', loadProject)
 
     function loadProject() {
         console.log('load')
@@ -103,13 +109,13 @@
     async function appendContent(output)
     {
         // Get all sprints
-        await fetch(API_base_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+        await fetch(API_project_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         })
             .then((data) => appendSprints(data,output))
             .catch(function (erreur) {
                 alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
-                //window.close()
+                window.close()
             })
     }
 
@@ -132,7 +138,7 @@
     async function appendStory(storyid,output)
     {
         let storydiv = document.createElement('div')
-        await fetch(API_base_url + '/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
+        await fetch(API_project_url + '/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(async function (story) {
             storydiv.innerHTML = "<h5>Story: " + story.name + "</h5>"
@@ -146,7 +152,7 @@
     }
 
     async function appendTests(storyid,output) {
-        await fetch(API_base_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
+        await fetch(API_project_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (tests) {
             for (test of tests)

@@ -86,8 +86,8 @@
                 <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'</p>
             </li>
             <li>
-                Le code Icescrum de votre projet, genre:
-                <span class="code">projectId = 'XXXXXX'</span>
+                Un tableau contenant les codes Icescrum des projets que vous voulez suivre, genre:
+                <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
                 <p class="small text-secondary">Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)</p>
             </li>
         </ol>
@@ -99,7 +99,7 @@
     </div>
 </div>
 <div id="output" style="margin: 30px;"></div>
-<div style="font-size: x-small">V1.5.1, Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
+<div style="font-size: x-small">V2.0, Powered by l'excellentissime <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a> de Nicolas Kruchten</div>
 </body>
 </html>
 <script>
@@ -109,26 +109,34 @@
     const API_base_url = 'https://icescrum.cpnv.ch/ws/project/'
     var API_project_url
 
-    selProj.addEventListener('change', loadProject)
-    document.addEventListener('DOMContentLoaded', function() {
-        // Configuration check
-        if (typeof (iceScrumToken) !== 'undefined' && typeof (projectIds) !== 'undefined')
-        {
-            for (projectId of projectIds) {
-                let opt=document.createElement('option')
-                opt.text = projectId
-                opt.value = projectId
-                selProj.appendChild(opt)
-            }
-            loadProject()
-        } else
-        {
-            divBadConfig.classList.remove('d-none')
-            spnLoading.classList.add('d-none')
+    // Init dropdown list from either an array of project IDs or a single ID
+    if (typeof (iceScrumToken) == 'undefined')
+    {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    } else if (typeof (projectIds) !== 'undefined') {
+        for (projectId of projectIds) {
+            let opt=document.createElement('option')
+            opt.text = projectId
+            opt.value = projectId
+            selProj.appendChild(opt)
         }
-    })
+        loadProject()
+    } else if (typeof (projectId) !== 'undefined') {
+        let opt=document.createElement('option')
+        opt.text = projectId
+        opt.value = projectId
+        selProj.appendChild(opt)
+        loadProject()
+    } else {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    }
+
+    selProj.addEventListener('change', loadProject)
 
     function loadProject() {
+        console.log('load')
         API_project_url = API_base_url + selProj.value
         output.innerHTML = ""
         // Project name

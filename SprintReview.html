@@ -36,6 +36,7 @@
 <body>
 <div class="pl-5 m-2 mt-4 text-center">
     <h1 id="spnProjName"></h1>
+    <select id="selProj"></select>
     <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
         <h3>Oooops!!</h3>
         <p>Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour fonctionner.</p>
@@ -48,8 +49,8 @@
                 <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'</p>
             </li>
             <li>
-                Le code Icescrum de votre projet, genre:
-                <span class="code">projectId = 'XXXXXX'</span>
+                Un tableau contenant les codes Icescrum des projets que vous voulez suivre, genre:
+                <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
                 <p class="small text-secondary">Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)</p>
             </li>
         </ol>
@@ -61,36 +62,63 @@
     </div>
 </div>
 <div id="output" style="margin: 30px;"></div>
+<div style="font-size: x-small">V2.0</div>
 </body>
 </html>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 
     // ============ Initialization =================
-    // Configuration check
-    if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined')
+
+    const API_base_url = 'https://icescrum.cpnv.ch/ws/project/'
+    var API_project_url
+
+    // Init dropdown list from either an array of project IDs or a single ID
+    if (typeof (iceScrumToken) == 'undefined')
     {
-        var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
-        appendContent(output)
-    } else
-    {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    } else if (typeof (projectIds) !== 'undefined') {
+        for (projectId of projectIds) {
+            let opt=document.createElement('option')
+            opt.text = projectId
+            opt.value = projectId
+            selProj.appendChild(opt)
+        }
+        loadProject()
+    } else if (typeof (projectId) !== 'undefined') {
+        let opt=document.createElement('option')
+        opt.text = projectId
+        opt.value = projectId
+        selProj.appendChild(opt)
+        loadProject()
+    } else {
         divBadConfig.classList.remove('d-none')
         spnLoading.classList.add('d-none')
     }
 
-    // Project name
-    fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
-        return response.json()
-    }).then(function (data) {
-        document.title = 'Projet ' + data.name
-    })
+    selProj.addEventListener('change', loadProject)
+
+    function loadProject() {
+        console.log('load')
+        API_project_url = API_base_url + selProj.value
+        output.innerHTML = ""
+        // Project name
+        fetch(API_project_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(function (data) {
+            spnProjName.innerText = 'Projet ' + data.name
+            document.title = 'Projet ' + data.name
+        })
+        appendContent(output)
+    }
 
     moment.locale();
 
     async function appendContent(output)
     {
         // Get all sprints
-        await fetch(API_base_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+        await fetch(API_project_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         })
             .then((data) => appendCurrentSprint(data, output))
@@ -119,7 +147,7 @@
     async function appendStory(storyid, output)
     {
         let storydiv = document.createElement('div')
-        await fetch(API_base_url + '/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
+        await fetch(API_project_url + '/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(async function (story) {
             if (story.state == 6) { // in review
@@ -135,7 +163,7 @@
 
     async function appendTests(storyid, output)
     {
-        await fetch(API_base_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
+        await fetch(API_project_url + '/acceptanceTest/story/' + story_id.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (tests) {
             for (test of tests)
@@ -203,7 +231,7 @@
             bro.classList.remove('bg-success', 'bg-danger', 'bg-warning')
         }
 
-        let action = API_base_url + '/acceptanceTest/' + box.dataset.testid + '?icescrum-token=' + iceScrumToken
+        let action = API_project_url + '/acceptanceTest/' + box.dataset.testid + '?icescrum-token=' + iceScrumToken
         axios
             .put(action,
                 {
