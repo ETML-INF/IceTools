@@ -122,10 +122,12 @@
         await fetch(API_base_url + '/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(async function (story) {
-            storydiv.innerHTML = "<h5>" + story.name + ":<br><br>" + story.description + "</h5>"
-            storydiv.classList.add('row', 'text-center', 'bg-light', 'p-3')
-            output.appendChild(storydiv)
-            await appendTests(storyid, output)
+            if (story.state == 6) { // in review
+                storydiv.innerHTML = "<h5>" + story.name + ":<br><br>" + story.description + "</h5>"
+                storydiv.classList.add('row', 'text-center', 'bg-light', 'p-3')
+                output.appendChild(storydiv)
+                await appendTests(storyid, output)
+            }
         }).catch(function (err) {
             console.log(err)
         })

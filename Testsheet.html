@@ -28,6 +28,7 @@
 <body>
 <div class="pl-5 m-2 mt-4 text-center">
     <h1 id="spnProjName"></h1>
+    <select id="selProj"></select>
     <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
         <h3>Oooops!!</h3>
         <p>Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour fonctionner.</p>
@@ -58,24 +59,44 @@
 <script>
 
     // ============ Initialization =================
-    // Configuration check
-    if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined')
-    {
-        var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
-        appendContent(output)
-    } else
-    {
-        divBadConfig.classList.remove('d-none')
-        spnLoading.classList.add('d-none')
-    }
 
-    // Project name
-    fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
-        return response.json()
-    }).then(function (data) {
-        spnProjName.innerText = 'Les tests du projet ' + data.name
-        document.title = 'Projet ' + data.name
+    const API_base_url = 'https://icescrum.cpnv.ch/ws/project/'
+    var API_project_url
+
+    selProj.addEventListener('change', loadProject)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configuration check
+        console.log('loading'+selProj.value)
+        if (typeof (iceScrumToken) !== 'undefined' && typeof (projectIds) !== 'undefined')
+        {
+            for (projectId of projectIds) {
+                let opt=document.createElement('option')
+                opt.text = projectId
+                opt.value = projectId
+                selProj.appendChild(opt)
+            }
+            console.log('loading'+selProj.value)
+            loadProject()
+        } else
+        {
+            divBadConfig.classList.remove('d-none')
+            spnLoading.classList.add('d-none')
+        }
     })
+
+    function loadProject() {
+        console.log('load')
+        API_project_url = API_base_url + selProj.value
+        output.innerHTML = ""
+        // Project name
+        fetch(API_project_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(function (data) {
+            spnProjName.innerText = 'Projet ' + data.name
+            document.title = 'Projet ' + data.name
+        })
+        appendContent(output)
+    }
 
     moment.locale();
 
@@ -88,7 +109,7 @@
             .then((data) => appendSprints(data,output))
             .catch(function (erreur) {
                 alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
-                window.close()
+                //window.close()
             })
     }
 

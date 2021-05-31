@@ -38,6 +38,7 @@
         Aide
     </button>
     <h1 id="spnProjName"></h1>
+    <select id="selProj"></select>
 
     <!-- Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -104,24 +105,41 @@
 <script>
 
     // ============ Initialization =================
-    // Configuration check
-    if (typeof (iceScrumToken) !== 'undefined' && typeof (projectId) !== 'undefined')
-    {
-        var API_base_url = 'https://icescrum.cpnv.ch/ws/project/' + projectId
-        loadData()
-    } else
-    {
-        divBadConfig.classList.remove('d-none')
-        spnLoading.classList.add('d-none')
-    }
 
-    // Project name
-    fetch(API_base_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
-        return response.json()
-    }).then(function (data) {
-        spnProjName.innerText = 'Projet ' + data.name
-        document.title = 'Projet ' + data.name
+    const API_base_url = 'https://icescrum.cpnv.ch/ws/project/'
+    var API_project_url
+
+    selProj.addEventListener('change', loadProject)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configuration check
+        if (typeof (iceScrumToken) !== 'undefined' && typeof (projectIds) !== 'undefined')
+        {
+            for (projectId of projectIds) {
+                let opt=document.createElement('option')
+                opt.text = projectId
+                opt.value = projectId
+                selProj.appendChild(opt)
+            }
+            loadProject()
+        } else
+        {
+            divBadConfig.classList.remove('d-none')
+            spnLoading.classList.add('d-none')
+        }
     })
+
+    function loadProject() {
+        API_project_url = API_base_url + selProj.value
+        output.innerHTML = ""
+        // Project name
+        fetch(API_project_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(function (data) {
+            spnProjName.innerText = 'Projet ' + data.name
+            document.title = 'Projet ' + data.name
+        })
+        loadData()
+    }
 
     function loadData()
     {
@@ -134,15 +152,16 @@
         stories[11] = {name: '(Urgentes)', tasks: []}
 
         // Get all stories
-        fetch(API_base_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
+        fetch(API_project_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (data) {
+            console.log(data)
             data.forEach(function (story) {
                 // use id as index for easy find
                 stories[story.id] = {name: story.name, type: story.type == 0 ? 'user' : (story.type == 3 ? 'tech' : 'rec/urg'), value: story.value, estimatedDate: story.estimatedDate}
             })
         }).then(function () { // get all tasks
-            fetch(API_base_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
+            fetch(API_project_url + '/task?icescrum-token=' + iceScrumToken).then(function (response) {
                 return response.json()
             }).then(function (data) {
                 data.forEach(function (task) {
@@ -192,7 +211,8 @@
             })
         }).catch(function (erreur) {
             alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
-            window.close()
+            console.log(erreur)
+            //window.close()
         })
     }
 
@@ -218,7 +238,7 @@
                 tâche: task.name,
                 story: storyname,
                 // story_id: task.parentStory ? task.parentStory.id : 0,
-                // release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
+                release: task.sprint.parentRelease ? task.sprint.parentRelease.name : '?',
                 sprint: task.sprint.index,
                 effectuée_par: task.responsible ? task.responsible.firstName : '',
                 temps_effectif: task.spent ? task.spent : '',
