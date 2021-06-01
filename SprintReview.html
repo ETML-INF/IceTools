@@ -223,6 +223,7 @@
         })
     }
 
+    // async because we await axios response, otherwise IceScrum chokes on concurrent requests
     async function setResult(box, result)
     {
         // remove all colors
