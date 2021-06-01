@@ -223,7 +223,7 @@
         })
     }
 
-    function setResult(box, result)
+    async function setResult(box, result)
     {
         // remove all colors
         for (bro of box.parentNode.children)
@@ -232,7 +232,7 @@
         }
 
         let action = API_project_url + '/acceptanceTest/' + box.dataset.testid + '?icescrum-token=' + iceScrumToken
-        axios
+        await axios
             .put(action,
                 {
                     "acceptanceTest": {
@@ -272,8 +272,7 @@
         } else {
             btnReset.classList.add('d-none')
             for (box of document.getElementsByClassName('default-result')) {
-                await new Promise(resolve => setTimeout(resolve, 100)); // ugly delay, but necessary: the IceScrum API does not like back-to-back calls
-                setResult(box,1)
+                await setResult(box,1)
             }
         }
     })
