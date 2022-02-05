@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sprint Retrospective</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+    <script src='_icescrum_api.js'></script>
+    <script src="https://momentjs.com/downloads/moment.js"></script>
+    <style>
+        #spinner {
+            width: 80px;
+            height: 80px;
+            left: 0px;
+            top: 0px;
+            opacity: 1;
+        }
+
+        .code {
+            font-family: "Courier New";
+            font-weight: bolder;
+            padding: 4px;
+            margin: 2px;
+        }
+
+        .box {
+            width: 30%;
+        }
+
+    </style>
+</head>
+<body>
+<div class="pl-5 m-2 mt-4 text-center">
+    <h1 id="spnProjName"></h1>
+    <select id="selProj"></select>
+    <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
+        <h3>Oooops!!</h3>
+        <p>Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour fonctionner.</p>
+        <p>Vous devez créer un fichier nommé <span class="code">_icescrum_api.js</span> dans le dossier où se trouve <span class="code">Timesheet.html</span></p>
+        <p>Dans ce fichier, vous devez mettre:</p>
+        <ol>
+            <li>
+                Votre token d'accès à l'API Icescrum. Cela donne quelque chose genre:
+                <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
+                <p class="small text-secondary">Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'</p>
+            </li>
+            <li>
+                Un tableau contenant les codes Icescrum des projets que vous voulez suivre, genre:
+                <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
+                <p class="small text-secondary">Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)</p>
+            </li>
+        </ol>
+        <p>Attention: ajoutez <span class="code">*_icescrum_api*</span> dans le fichier <span class="code">.gitignore</span> de votre repository.</p>
+        <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
+    </div>
+    <div id="spnLoading">
+        <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
+    </div>
+</div>
+<h3 id="divSprintHeader" style="margin: 30px;"></h3>
+<div class="m-3">
+    <h5>Globalement</h5>
+    <textarea id="txtGlobal" style="width: 50%"></textarea>
+</div>
+<div id="divFeedbacks" class="ml-5">
+</div>
+<div class="row ml-5">
+    <div id="btnPos" class="btn btn-success ml-3">Point positif</div>
+    <div id="btnNeg" class="btn btn-danger ml-3">Point négatif</div>
+    <div id="btnSend" class="btn btn-primary ml-5">Formater</div>
+    <div id="msgOk" class="d-none small m-2">Copié dans le clipboard</div>
+</div>
+<div style="font-size: x-small">V1.0</div>
+</body>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+
+    // ============ Initialization =================
+
+    const API_base_url = 'https://icescrum.cpnv.ch/ws/project/'
+    var API_project_url
+
+    // Handle user actions
+    selProj.addEventListener('change', loadProject)
+    btnPos.addEventListener('click', addFeedback)
+    btnNeg.addEventListener('click', addFeedback)
+    btnSend.addEventListener('click', sendRetro)
+
+    // Init dropdown list from either an array of project IDs or a single ID
+    if (typeof (iceScrumToken) == 'undefined')
+    {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    } else if (typeof (projectIds) !== 'undefined')
+    {
+        for (projectId of projectIds)
+        {
+            let opt = document.createElement('option')
+            opt.text = projectId
+            opt.value = projectId
+            selProj.appendChild(opt)
+        }
+        loadProject()
+    } else if (typeof (projectId) !== 'undefined')
+    {
+        let opt = document.createElement('option')
+        opt.text = projectId
+        opt.value = projectId
+        selProj.appendChild(opt)
+        loadProject()
+    } else
+    {
+        divBadConfig.classList.remove('d-none')
+        spnLoading.classList.add('d-none')
+    }
+
+    function loadProject()
+    {
+        API_project_url = API_base_url + selProj.value
+        // Project name
+        fetch(API_project_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        }).then(function (data) {
+            spnProjName.innerText = 'Projet ' + data.name
+            document.title = 'Projet ' + data.name
+        })
+        setup()
+    }
+
+    moment.locale();
+
+    async function setup()
+    {
+        // Get all sprints
+        await fetch(API_project_url + '/sprint?icescrum-token=' + iceScrumToken).then(function (response) {
+            return response.json()
+        })
+            .then((data) => selectLastSprint(data))
+            .catch(function (erreur) {
+                alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
+                window.close()
+            })
+    }
+
+    async function selectLastSprint(sprints)
+    {
+        let lastsprint = null // last sprint that was closed
+        for (sprint of sprints)
+        {
+            if (sprint.state == 3)
+            { // sprint closed
+                lastsprint = sprint
+            }
+        }
+        divSprintHeader.innerText = 'Rétrospective du sprint ' + lastsprint.orderNumber + ' de la release ' + lastsprint.parentRelease.name
+        spnLoading.classList.add('d-none')
+    }
+
+    function addFeedback(e)
+    {
+        switch (e.target.id) {
+            case 'btnPos':
+                addSection(['On a bien','parce que','et on pourrait encore','Félicitations à'])
+                break
+            case 'btnNeg':
+                addSection(['On a mal','parce que','et donc il faut qu\'on'])
+                break
+            default:
+                console.log('Bizarre click...')
+        }
+    }
+    /**
+     * Add a section for a feedback
+     * headers is an array of strings holding the fields of the "form"
+     */
+    function addSection(headers)
+    {
+        let section = document.createElement('div')
+        section.classList.add("p-2", "mb-2","border", "d-flex", "flex-row", "justify-content-around")
+        divFeedbacks.appendChild(section)
+
+        for (header of headers) {
+            let box = document.createElement('div')
+            box.classList.add("m-1", "d-flex", "flex-column", "box")
+            section.appendChild(box)
+            let labdesc = document.createElement('label')
+            labdesc.innerText = header
+            box.appendChild(labdesc)
+            let desc = document.createElement('textarea')
+            box.appendChild(desc)
+        }
+    }
+
+    /**
+     * At this stage, I don't know how to use IceScrum API to update the sprint retro,
+     * so the function merely copies the retro to the clipboard
+     * @param e
+     */
+    function sendRetro(e)
+    {
+        res = txtGlobal.value+'\n\n'
+        for (feedback of divFeedbacks.children) {
+            res += '<hr>\n'
+            for (topic of feedback.children) {
+                if (topic.children[1].value.length > 0){
+                    res += ('*'+topic.children[0].innerText+':*\n') // label
+                    res += (topic.children[1].value+'\n') // textarea
+                }
+            }
+        }
+        navigator.clipboard.writeText(res)
+        msgOk.classList.remove("d-none")
+        setTimeout(function() {
+            msgOk.classList.add("d-none")
+        },1000)
+    }
+</script>
