@@ -205,11 +205,21 @@
                         task.surprise = task.date_de_création > storyStarts[task.story_id] // task was a surprise if it was created AFTER some tasks were already completed in this story
                     }
                 })
+                
                 // now feed those tasks to the pivot table
+                customAggregator = (typeof (preferredAggregator) !== 'undefined') && (typeof (preferredAggregationOver) !== 'undefined');
                 $("#output").pivotUI(tasks,
                     {
-                        rows: ["story", "tâche", "remarque"],
-                        cols: []
+                        // preferred headers at the start. Example setting to customize:
+                        //      preferredColumns = ["story", "tâche", "terminée_le", "remarque"]
+                        rows: (typeof (preferredColumns) !== 'undefined') ? preferredColumns : ["story", "tâche", "remarque"],
+                        cols: [],
+                        // aggregation method for the "totals" column
+                        // example values in a separate settings file: 
+                        //      preferredAggregator = "Sum";
+                        //      preferredAggregationOver = ["temps_effectif"];
+                        aggregatorName: customAggregator ? preferredAggregator : undefined,
+                        vals: customAggregator ? preferredAggregationOver : []
                     }
                 );
 
