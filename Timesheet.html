@@ -201,15 +201,17 @@
 
                     if (task.story_id > 0)
                     {
-                        console.log(task,storyStarts[task.story_id])
                         task.surprise = task.date_de_création > storyStarts[task.story_id] // task was a surprise if it was created AFTER some tasks were already completed in this story
                     }
                 })
                 // now feed those tasks to the pivot table
                 $("#output").pivotUI(tasks,
                     {
-                        rows: ["story", "tâche", "remarque"],
-                        cols: []
+                        rows: ["story", "tâche", "remarque", "terminée_le"],
+                        cols: [],
+                        aggregatorName: "Integer Sum",
+                        vals: ["temps_effectif"],
+                        rendererName: "Table",
                     }
                 );
 
