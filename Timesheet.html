@@ -211,6 +211,7 @@
 
   const API_base_url = "https://cloud.icescrum.com/ws/project/";
   var API_project_url;
+  var dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }; // for date formatting
 
   // Init dropdown list from either an array of project IDs or a single ID
   if (typeof iceScrumToken == "undefined") {
@@ -309,6 +310,7 @@
               let ratio = task.temps_effectif / task.temps_estimé;
               task.facile = ratio < 0.5;
               task.durdur = ratio > 1.5;
+              if (task.terminée_le != "?") task.terminée_le = (new Date(task.terminée_le)).toLocaleDateString("fr-CH",dateFormatOptions)
 
               if (task.story_id > 0) {
                 task.surprise =
