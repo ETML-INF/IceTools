@@ -200,7 +200,7 @@
     </div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
-      V2.0, Powered by l'excellentissime
+      V2.1, Feb 2023, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
       de Nicolas Kruchten
     </div>
@@ -319,7 +319,7 @@
             });
             // now feed those tasks to the pivot table
             $("#output").pivotUI(tasks, {
-              rows: ["story", "tâche", "remarque", "terminée_le"],
+              rows: ["story", "terminée_le", "tâche", "remarque"],
               cols: [],
               aggregatorName: "Sum",
               vals: ["temps_effectif"],
@@ -358,7 +358,7 @@
     res.push({
       tâche: task.name,
       story: storyname,
-      story_id: task.parentStory ? task.parentStory.id : 0,
+      story_id: task.parentStory ? task.parentStory.id : 0, // might be useful if stories have the same name in different sprints
       release: task.sprint.parentRelease ? task.sprint.parentRelease.name : "?",
       sprint: task.sprint.index,
       effectuée_par: task.responsible ? task.responsible.firstName : "",
@@ -369,7 +369,6 @@
         ? stories[task.parentStory.id].type
         : "rec/urg",
       terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : "?",
-      doneDate: task.doneDate,
       semaine: task.doneDate
         ? getNumberOfWeek(task.doneDate.substring(0, 10))
         : "?",
