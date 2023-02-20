@@ -99,7 +99,7 @@
               <ul>
                 <li>
                   Pour une vue 'journal de travail': remplacer 'count' par
-                  'Sum', puis sélectionner 'temps_effectif_tâche'
+                  'Sum', puis sélectionner 'temps_effectif'
                 </li>
                 <li>
                   Faire des drag-n-drop des champs qui vous intéressent dans la
@@ -322,7 +322,7 @@
               rows: ["story", "tâche", "remarque", "terminée_le"],
               cols: [],
               aggregatorName: "First",
-              vals: ["temps_effectif_h"],
+              vals: ["temps_effectif"],
               rendererName: "Table",
             });
 
@@ -363,13 +363,8 @@
       sprint: task.sprint.index,
       effectuée_par: task.responsible ? task.responsible.firstName : "",
       temps_effectif: task.spent ? task.spent : "",
-      temps_effectif_h: task.spent
-        ? Math.floor(task.spent / 60) +
-          "h" +
-          String(task.spent % 60).padStart(2, "0")
-        : "",
       temps_estimé: task.initial ? task.initial : "",
-      date_de_création: task.dateCreated,
+      date_de_création: (new Date(task.dateCreated)).toLocaleDateString("fr-CH",dateFormatOptions),
       type_story: task.parentStory
         ? stories[task.parentStory.id].type
         : "rec/urg",
