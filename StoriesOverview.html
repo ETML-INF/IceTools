@@ -103,9 +103,12 @@
 
     selProj.addEventListener('change', loadProject)
 
+    var clipboardData;
+
     function loadProject()
     {
         API_project_url = API_base_url + selProj.value
+        clipboardData = "";
         output.innerHTML = ""
         // Project name
         fetch(API_project_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
@@ -121,7 +124,7 @@
 
     async function appendContent(output)
     {
-        // Get all sprints
+        // Get all stories
         await fetch(API_project_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         })
@@ -132,6 +135,7 @@
                     await fetch(API_project_url + '/story/' + story.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
                         return response.json()
                     }).then(async function (story) {
+                        clipboardData += (story.name + "\n" + story.description.replaceAll("\n",String.fromCharCode(11)) + "\n");
                         storydiv.innerHTML = "<h5>" + story.name + ":<br><br>" + story.description + "</h5>"
                         storydiv.classList.add('row', 'text-center', 'bg-info', 'p-3')
                         output.appendChild(storydiv)
@@ -140,6 +144,7 @@
                         console.log(err)
                     })
                 }
+                setClipboard(clipboardData)
                 spnLoading.classList.add('d-none')
             })
             .catch(function (erreur) {
@@ -150,6 +155,7 @@
 
     async function appendTests(storyid, output)
     {
+        await new Promise(r => setTimeout(r, 500)); // cooldown for IceScrum
         await fetch(API_project_url + '/acceptanceTest/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
         }).then(function (tests) {
@@ -167,11 +173,27 @@
                 td.classList.add('col-8')
                 tr.appendChild(td)
                 tr.appendChild(td)
+                clipboardData += (test.name + "\t" + test.description.replaceAll("\n"," ") + "\n");
             }
+            clipboardData += "\n";
         }).catch(function (err) {
             console.log(err)
         })
     }
 
+    function setClipboard(text) {
+        const type = "text/plain";
+        const blob = new Blob([text], { type });
+        const data = [new ClipboardItem({ [type]: blob })];
+
+        navigator.clipboard.write(data).then(
+            () => {
+                alert ("Le contenu peut maintenant être collé dans Word")
+            },
+            () => {
+                alert ("Erreur d'accès au presse papier")
+            }
+        );
+    }
 
 </script>
