@@ -36,7 +36,6 @@
     </style>
 </head>
 <body>
-<button id="cmdSaveAsWord" type="button" onclick="generate()" class="d-none">Enregistrer au format Word</button>
 <div class="pl-5 m-2 mt-4 text-center">
     <h1 id="spnProjName"></h1>
     <select id="selProj"></select>
@@ -63,15 +62,14 @@
     <div id="spnLoading">
         <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
     </div>
+    <br>
+    <button id="cmdSaveAsWord" type="button" onclick="generate()" class="d-none">Enregistrer au format Word</button>
 </div>
-<div id="output" style="margin: 30px;"></div>
 <div style="font-size: x-small">V2.0</div>
 </body>
 </html>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-
-
 
 const docContent = {
     sections: [
@@ -82,21 +80,10 @@ const docContent = {
     ]
   }
 
-docContent.sections[0].children.push(new docx.Paragraph({
-    children: [
-              new docx.TextRun("Killroy was here"),
-              new docx.TextRun({
-                text: "Foo Bar",
-                bold: true
-              })
-            ]
-  }))
-
 function generate() {
   docx.Packer.toBlob(new docx.Document(docContent)).then((blob) => {
     console.log(blob);
     saveAs(blob, "example.docx");
-    console.log("Document created successfully");
   });
 }
 
@@ -135,13 +122,9 @@ function generate() {
 
     selProj.addEventListener('change', loadProject)
 
-    var clipboardData;
-
     function loadProject()
     {
         API_project_url = API_base_url + selProj.value
-        clipboardData = "";
-        output.innerHTML = ""
         // Project name
         fetch(API_project_url + '/?icescrum-token=' + iceScrumToken).then(function (response) {
             return response.json()
@@ -149,12 +132,12 @@ function generate() {
             spnProjName.innerText = 'Projet ' + data.name
             document.title = 'Projet ' + data.name
         })
-        appendContent(output)
+        buildContent()
     }
 
     moment.locale();
 
-    async function appendContent(output)
+    async function buildContent()
     {
         // Get all stories
         await fetch(API_project_url + '/story?icescrum-token=' + iceScrumToken).then(function (response) {
@@ -163,7 +146,6 @@ function generate() {
             .then(async function (data) {
                 for (story of data)
                 {
-                    let storydiv = document.createElement('div')
                     await fetch(API_project_url + '/story/' + story.id + '?icescrum-token=' + iceScrumToken).then(function (response) {
                         return response.json()
                     }).then(async function (story) {
@@ -192,7 +174,10 @@ function generate() {
                                         new docx.TableCell({
                                             children: [
                                                 new docx.Paragraph("Tests d'acceptance: "),
-                                                new docx.Table({rows: testRows})
+                                                new docx.Table({
+                                                    rows: testRows,
+                                                    borders: docx.TableBorders.NONE
+                                                })
                                             ],
                                         }),
                                     ],
@@ -202,11 +187,6 @@ function generate() {
                         });
                         docContent.sections[0].children.push(storyDoc)
                         docContent.sections[0].children.push(new docx.Paragraph(''))
-
-                        storydiv.innerHTML = "<h5>" + story.name + ":<br><br>" + story.description + "</h5>"
-                        storydiv.classList.add('row', 'text-center', 'bg-info', 'p-3')
-                        output.appendChild(storydiv)
-                        await appendTests(story.id, output)
                     }).catch(function (err) {
                         console.log(err)
                     })
@@ -218,32 +198,6 @@ function generate() {
                 alert("Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri")
                 window.close()
             })
-    }
-
-    async function appendTests(storyid, output)
-    {
-        await new Promise(r => setTimeout(r, 500)); // cooldown for IceScrum
-        await fetch(API_project_url + '/acceptanceTest/story/' + storyid + '?icescrum-token=' + iceScrumToken).then(function (response) {
-            return response.json()
-        }).then(function (tests) {
-            for (test of tests)
-            {
-                let tr = document.createElement('div')
-                tr.classList.add('row', 'border-bottom')
-                output.appendChild(tr)
-                let td = document.createElement('div')
-                td.innerText = test.name
-                td.classList.add('col-2')
-                tr.appendChild(td)
-                td = document.createElement('div')
-                td.innerText = test.description
-                td.classList.add('col-8')
-                tr.appendChild(td)
-                tr.appendChild(td)
-            }
-        }).catch(function (err) {
-            console.log(err)
-        })
     }
 
     async function testsDoc(storyid, rows)
