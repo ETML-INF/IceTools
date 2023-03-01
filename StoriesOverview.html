@@ -63,7 +63,7 @@
         <img src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading GIF by Mashable" id="spinner"> Chargement de données depuis IceScrum...
     </div>
     <br>
-    <button id="cmdSaveAsWord" type="button" onclick="generate()" class="d-none">Enregistrer au format Word</button>
+    <button id="cmdSaveAsWord" type="button" onclick="generate()" class="d-none p-3 m-5">Enregistrer au format Word</button>
 </div>
 <div style="font-size: x-small">V2.0</div>
 </body>
@@ -72,6 +72,20 @@
 <script>
 
 const docContent = {
+    styles: {
+        paragraphStyles: [
+            {
+                id: "Normal",
+                name: "Normal",
+                basedOn: "Normal",
+                next: "Normal",
+                quickFormat: true,
+                run: {
+                    font: "Calibri"
+                }
+            }
+        ]
+        },
     sections: [
       {
         properties: {},
@@ -156,16 +170,9 @@ function generate() {
                         const storyDoc = new docx.Table({
                             rows: [
                                 new docx.TableRow({
-                                        children: [
-                                            new docx.TableCell({
-                                                children: [new docx.Paragraph("Titre: "+story.name)],
-                                            }),
-                                        ],
-                                    }),
-                                new docx.TableRow({
                                     children: [
                                         new docx.TableCell({
-                                            children: [new docx.Paragraph("Description: "+story.description)],
+                                            children: [new docx.Paragraph(story.description)],
                                         }),
                                     ],
                                 }),                                
@@ -173,7 +180,10 @@ function generate() {
                                     children: [
                                         new docx.TableCell({
                                             children: [
-                                                new docx.Paragraph("Tests d'acceptance: "),
+                                                new docx.Paragraph({
+                                                    text: "Tests d'acceptance: ",
+                                                    alignment: docx.AlignmentType.CENTER
+                                                }),
                                                 new docx.Table({
                                                     rows: testRows,
                                                     borders: docx.TableBorders.NONE
@@ -185,8 +195,9 @@ function generate() {
 
                             ],
                         });
+                        docContent.sections[0].children.push(new docx.Paragraph({text: story.name, heading: docx.HeadingLevel.HEADING_3}))
                         docContent.sections[0].children.push(storyDoc)
-                        docContent.sections[0].children.push(new docx.Paragraph(''))
+                        docContent.sections[0].children.push(new docx.Paragraph(""))
                     }).catch(function (err) {
                         console.log(err)
                     })
