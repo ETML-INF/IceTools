@@ -40,8 +40,8 @@
   </head>
   <body>
     <div class="pl-5 m-2 mt-4 text-center">
-      <h1 id="spnProjName"></h1>
-      <select id="selProj"></select>
+      <h3>Projet</h3>
+      <select id="selProj" class="m-3"></select>
       <div
         id="divBadConfig"
         class="container d-none text-left m-5 p-3 bg-warning"
@@ -84,20 +84,33 @@
         </p>
         <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
       </div>
-      <div id="spnLoading">
+      <div>
+        <h3>Format du document:</h3>
+        <input id="rbtAnalysis" type="radio" checked /> Analyse<br />
+        <input id="rbtTests" type="radio" /> Rapport de test<br />
+      </div>
+      <button
+        id="cmdPrepare"
+        type="button"
+        onclick="loadProject()"
+        class="p-3 m-3"
+      >
+        Préparer
+      </button>
+      <div id="spnLoading" class="d-none">
         <img
           src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
           alt="Loading GIF by Mashable"
           id="spinner"
         />
-        Chargement de données depuis IceScrum...
+        Préparation ...
       </div>
       <br />
       <button
         id="cmdSaveAsWord"
         type="button"
         onclick="generate()"
-        class="d-none p-3 m-5"
+        class="d-none p-3 m-3"
       >
         Enregistrer au format Word
       </button>
@@ -107,7 +120,9 @@
 </html>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  // ============ Initialization =================
+  moment.locale();
+
+  // ============ Initialization of output document =================
 
   const docContent = {
     styles: {
@@ -135,11 +150,11 @@
   function generate() {
     docx.Packer.toBlob(new docx.Document(docContent)).then((blob) => {
       console.log(blob);
-      saveAs(blob, "example.docx");
+      saveAs(blob, selProj.value+".docx");
     });
   }
 
-  // ============ Initialization =================
+  // ============ Initialization of IceScrum interface =================
 
   const API_base_url = "https://cloud.icescrum.com/ws/project/";
   var API_project_url;
@@ -155,7 +170,6 @@
       opt.value = projectId;
       selProj.appendChild(opt);
     }
-    loadProject();
   } else if (typeof projectId !== "undefined") {
     let opt = document.createElement("option");
     opt.text = projectId;
@@ -167,9 +181,9 @@
     spnLoading.classList.add("d-none");
   }
 
-  selProj.addEventListener("change", loadProject);
-
   function loadProject() {
+    cmdPrepare.classList.add("d-none");
+    spnLoading.classList.remove("d-none");
     API_project_url = API_base_url + selProj.value;
     // Project name
     fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
@@ -182,8 +196,6 @@
       });
     buildContent();
   }
-
-  moment.locale();
 
   async function buildContent() {
     // Get all stories
