@@ -86,7 +86,8 @@
       </div>
       <div>
         <h3>Format du document:</h3>
-        <input name="rbtFormat" id="rbtAnalysis" type="radio" checked /> Analyse<br />
+        <input name="rbtFormat" id="rbtAnalysis" type="radio" checked />
+        Analyse<br />
         <input name="rbtFormat" id="rbtTests" type="radio" /> Rapport de test<br />
       </div>
       <button
@@ -150,7 +151,7 @@
   function generate() {
     docx.Packer.toBlob(new docx.Document(docContent)).then((blob) => {
       console.log(blob);
-      saveAs(blob, selProj.value+".docx");
+      saveAs(blob, selProj.value + ".docx");
     });
   }
 
@@ -194,16 +195,18 @@
         spnProjName.innerText = "Projet " + data.name;
         document.title = "Projet " + data.name;
       });
-    buildContent();
+    buildAnalysisContent();
   }
 
-  async function buildContent() {
+  // Build the docx js content in the "Functional Analysis" format
+  async function buildAnalysisContent() {
     // Get all stories
     await fetch(API_project_url + "/story?icescrum-token=" + iceScrumToken)
       .then(function (response) {
         return response.json();
       })
       .then(async function (data) {
+        // Process each story
         for (story of data) {
           await fetch(
             API_project_url +
@@ -218,8 +221,9 @@
             .then(async function (story) {
               // Create one table per story
               let testRows = [];
-              await testsDoc(story.id, testRows);
-
+              await testsDoc(story.id, testRows); // prepare all tests as array of rows
+              
+              // Prepare the table
               const storyDoc = new docx.Table({
                 rows: [
                   new docx.TableRow({
@@ -247,6 +251,8 @@
                   }),
                 ],
               });
+              
+              // Stuff all this into the document
               docContent.sections[0].children.push(
                 new docx.Paragraph({
                   text: story.name,
@@ -271,8 +277,9 @@
       });
   }
 
+  // Takes the tests of the given story and put them in an array of docx rows
   async function testsDoc(storyid, rows) {
-    await new Promise((r) => setTimeout(r, 500)); // cooldown for IceScrum
+    await new Promise((r) => setTimeout(r, 500)); // cooldown for IceScrum. Without it, the API starts throwing CORS exceptions after a dozen requests
     await fetch(
       API_project_url +
         "/acceptanceTest/story/" +
