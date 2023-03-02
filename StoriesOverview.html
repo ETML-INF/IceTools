@@ -183,8 +183,6 @@
   }
 
   function loadProject() {
-    cmdPrepare.classList.add("d-none");
-    spnLoading.classList.remove("d-none");
     API_project_url = API_base_url + selProj.value;
     // Project name
     fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
@@ -192,14 +190,19 @@
         return response.json();
       })
       .then(function (data) {
-        spnProjName.innerText = "Projet " + data.name;
+        cmdPrepare.classList.add("d-none");
+        spnLoading.classList.remove("d-none");
         document.title = "Projet " + data.name;
+        if (rbtAnalysis.checked) {
+          buildAnalysisContent(docContent.sections[0]);
+        } else {
+          buildTestReportContent(docContent.sections[0]);
+        }
       });
-    buildAnalysisContent();
   }
 
-  // Build the docx js content in the "Functional Analysis" format
-  async function buildAnalysisContent() {
+  // Build the docx js content in the "Functional Analysis" format, adds it to the section passed
+  async function buildAnalysisContent(section) {
     // Get all stories
     await fetch(API_project_url + "/story?icescrum-token=" + iceScrumToken)
       .then(function (response) {
@@ -221,8 +224,8 @@
             .then(async function (story) {
               // Create one table per story
               let testRows = [];
-              await testsDoc(story.id, testRows); // prepare all tests as array of rows
-              
+              await testsDoc(story.id, testRows, false); // prepare all tests as array of rows, without result
+
               // Prepare the table
               const storyDoc = new docx.Table({
                 rows: [
@@ -251,16 +254,16 @@
                   }),
                 ],
               });
-              
+
               // Stuff all this into the document
-              docContent.sections[0].children.push(
+              section.children.push(
                 new docx.Paragraph({
                   text: story.name,
                   heading: docx.HeadingLevel.HEADING_3,
                 })
               );
-              docContent.sections[0].children.push(storyDoc);
-              docContent.sections[0].children.push(new docx.Paragraph(""));
+              section.children.push(storyDoc);
+              section.children.push(new docx.Paragraph(""));
             })
             .catch(function (err) {
               console.log(err);
@@ -277,8 +280,71 @@
       });
   }
 
+  // Build the docx js content in the "Test Report" format, adds it to the section passed
+  async function buildTestReportContent(section) {
+    // Get all sprints
+    await fetch(API_project_url + "/sprint?icescrum-token=" + iceScrumToken)
+      .then(function (response) {
+        return response.json();
+      })
+      .then((data) => appendSprints(data, section))
+      .catch(function (erreur) {
+        alert(
+          "Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri"
+        );
+        window.close();
+      });
+  }
+
+  // Add each sprint as a Heading 3 to the section
+  async function appendSprints(sprints, section) {
+    for (sprint of sprints) {
+      section.children.push(
+        new docx.Paragraph({
+          text: "Sprint " + sprint.orderNumber,
+          heading: docx.HeadingLevel.HEADING_3,
+        })
+      );
+      for (story_id of sprint.stories_ids) {
+        await appendTestsOfStory(story_id.id, section);
+      }
+    }
+    spnLoading.classList.add("d-none");
+    cmdSaveAsWord.classList.remove("d-none");
+  }
+
+  // Add the tests of one story to the section
+  async function appendTestsOfStory(storyid, section) {
+    await fetch(
+      API_project_url + "/story/" + storyid + "?icescrum-token=" + iceScrumToken
+    )
+      .then(function (response) {
+        return response.json();
+      })
+      .then(async function (story) {
+        section.children.push(
+          new docx.Paragraph({
+            text: story.name,
+            heading: docx.HeadingLevel.HEADING_4,
+          })
+        );
+        // Create one table per story
+        let testRows = [];
+        await testsDoc(story.id, testRows, true); // prepare all tests as array of rows
+        section.children.push(
+          new docx.Table({
+            rows: testRows,
+          })
+        );
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  }
+
   // Takes the tests of the given story and put them in an array of docx rows
-  async function testsDoc(storyid, rows) {
+  // addResult is a bool that tells to add a cell with the result
+  async function testsDoc(storyid, rows, addResult) {
     await new Promise((r) => setTimeout(r, 500)); // cooldown for IceScrum. Without it, the API starts throwing CORS exceptions after a dozen requests
     await fetch(
       API_project_url +
@@ -292,18 +358,65 @@
       })
       .then(function (tests) {
         for (test of tests) {
-          rows.push(
-            new docx.TableRow({
-              children: [
-                new docx.TableCell({
-                  children: [new docx.Paragraph(test.name)],
-                }),
-                new docx.TableCell({
-                  children: [new docx.Paragraph(test.description)],
-                }),
-              ],
-            })
-          );
+          if (addResult) {
+            switch (test.state) {
+              case 10:
+                resultCell = new docx.TableCell({
+                  children: [
+                  new docx.Paragraph(
+                      "OK"
+                    ),
+                    new docx.Paragraph(
+                      moment(test.lastUpdated).format("D MMM")
+                    ),
+                  ],
+                });
+                break;
+              case 5:
+                resultCell = new docx.TableCell({
+                  children: [
+                  new docx.Paragraph(
+                      "ko"
+                    ),
+                    new docx.Paragraph(
+                      moment(test.lastUpdated).format("D MMM")
+                    ),
+                  ],
+                });
+                break;
+              default:
+                resultCell = new docx.TableCell({
+                  children: [new docx.Paragraph("???")],
+                });
+            }
+
+            rows.push(
+              new docx.TableRow({
+                children: [
+                  new docx.TableCell({
+                    children: [new docx.Paragraph(test.name)],
+                  }),
+                  new docx.TableCell({
+                    children: [new docx.Paragraph(test.description)],
+                  }),
+                  resultCell,
+                ],
+              })
+            );
+          } else {
+            rows.push(
+              new docx.TableRow({
+                children: [
+                  new docx.TableCell({
+                    children: [new docx.Paragraph(test.name)],
+                  }),
+                  new docx.TableCell({
+                    children: [new docx.Paragraph(test.description)],
+                  }),
+                ],
+              })
+            );
+          }
         }
       })
       .catch(function (err) {
