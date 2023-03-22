@@ -60,16 +60,15 @@
 
       .tick {
         border-left: 2px solid black;
-        height: 20px;
         color: gray;
         font-size: x-small;
-        padding-left: 3px;
+        height: 15px;
       }
       .ticks {
-        border-bottom: 1px solid black;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        height: 15px;
       }
     </style>
   </head>
@@ -216,19 +215,23 @@
       releasediv.appendChild(reltitlediv);
 
       // Add tickline
+      let dayOfWeek = releasestart.isoWeekday();
       ticksdiv = document.createElement("div");
       ticksdiv.classList.add("ticks");
-      let monday = releasestart.clone().startOf("isoWeek").add(7, "days");
-      ticksdiv.style.paddingLeft =
-        (monday.diff(releasestart, "days") / releaseduration) * 100 + "%";
-      let width = (7 / releaseduration) * 100;
-      while (monday < releaseend) {
+      let width = 100 / releaseduration;
+      for (i = 0; i < releaseduration; i++) {
         let tickdiv = document.createElement("div");
+        if ((dayOfWeek + i) % 7 == 1) {
+          tickdiv.classList.add("tick");
+          tickdiv.innerText = releasestart
+            .clone()
+            .add(i, "days")
+            .format("DD.MM");
+        } else {
+          tickdiv.innerHTML = "&nbsp;";
+        }
         tickdiv.style.width = width + "%";
-        tickdiv.classList.add("tick");
-        tickdiv.innerText = monday.format("DD.MM");
         ticksdiv.appendChild(tickdiv);
-        monday.add(7, "days");
       }
       releasediv.appendChild(ticksdiv);
 
