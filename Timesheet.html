@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <title>Journal</title>
     <!-- external libs from cdnjs -->
-    <script
-      type="text/javascript"
-      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"
-    ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script
       type="text/javascript"
       src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"
@@ -29,10 +26,7 @@
       type="text/css"
       href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css"
     />
-    <script
-      type="text/javascript"
-      src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"
-    ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
 
     <script src="_icescrum_api.js"></script>
     <style>
@@ -60,12 +54,7 @@
   <body>
     <div class="pl-5 m-2 mt-4 text-center">
       <!-- Button trigger modal -->
-      <button
-        type="button"
-        class="btn btn-small btn-light float-left"
-        data-toggle="modal"
-        data-target="#exampleModal"
-      >
+      <button type="button" class="btn btn-small btn-light float-left" data-toggle="modal" data-target="#exampleModal">
         Aide
       </button>
       <h1 id="spnProjName"></h1>
@@ -83,109 +72,80 @@
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">
-                Aide de Timesheet
-              </h5>
-              <button
-                type="button"
-                class="close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
+              <h5 class="modal-title" id="exampleModalLabel">Aide de Timesheet</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body text-left">
               <ul>
                 <li>
-                  Pour une vue 'journal de travail': remplacer 'count' par
-                  'Sum', puis sélectionner 'temps_effectif'
+                  Pour une vue 'journal de travail': remplacer 'count' par 'Sum', puis sélectionner 'temps_effectif'
                 </li>
                 <li>
-                  Faire des drag-n-drop des champs qui vous intéressent dans la
-                  zone des en-têtes de ligne ou de colonne
+                  Faire des drag-n-drop des champs qui vous intéressent dans la zone des en-têtes de ligne ou de colonne
                 </li>
                 <li>
                   Précisions sur certains champs:
                   <ul>
                     <li>'effort_estimé_story' est en points, pas en temps</li>
                     <li>'value' correspond à la business value</li>
+                    <li>'semaine' est au format YYWW. Exemple: semaine 9 de 2021 => 2109</li>
+                    <li>'facile' est vrai pour une tâche qui a pris moins de la moitié du temps initialement estimé</li>
                     <li>
-                      'semaine' est au format YYWW. Exemple: semaine 9 de 2021
-                      => 2109
+                      'durdur' est vrai pour une tâche dont le temps effectif est plus d'une fois et demi le temps
+                      initialement estimé
                     </li>
                     <li>
-                      'facile' est vrai pour une tâche qui a pris moins de la
-                      moitié du temps initialement estimé
+                      'surprise' est vrai pour une tâche qui a été créée après qu'au moins une tâche de la story a été
+                      terminée
                     </li>
                     <li>
-                      'durdur' est vrai pour une tâche dont le temps effectif
-                      est plus d'une fois et demi le temps initialement estimé
-                    </li>
-                    <li>
-                      'surprise' est vrai pour une tâche qui a été créée après
-                      qu'au moins une tâche de la story a été terminée
-                    </li>
-                    <li>
-                      Dans le cas où vous avez mis plusieurs tags sur la tâche,
-                      'tag' ne contiendra que le tout premier
+                      Dans le cas où vous avez mis plusieurs tags sur la tâche, 'tag' ne contiendra que le tout premier
                     </li>
                   </ul>
                 </li>
               </ul>
             </div>
             <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-dismiss="modal"
-              >
-                Fermer
-              </button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
             </div>
           </div>
         </div>
       </div>
 
-      <div
-        id="divBadConfig"
-        class="container d-none text-left m-5 p-3 bg-warning"
-      >
+      <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
         <h3>Oooops!!</h3>
         <p>
-          Si vous voyez ce texte, c'est que cette page a besoin d'informations
-          compémentaires de votre part pour fonctionner.
+          Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour
+          fonctionner.
         </p>
         <p>
           Vous devez créer un fichier nommé
-          <span class="code">_icescrum_api.js</span> dans le dossier où se
-          trouve <span class="code">Timesheet.html</span>
+          <span class="code">_icescrum_api.js</span> dans le dossier où se trouve
+          <span class="code">Timesheet.html</span>
         </p>
         <p>Dans ce fichier, vous devez mettre:</p>
         <ol>
           <li>
-            Votre token d'accès à l'API Icescrum. Cela donne quelque chose
-            genre:
+            Votre token d'accès à l'API Icescrum. Cela donne quelque chose genre:
             <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
             <p class="small text-secondary">
-              Vous générez ou retrouvez votre token dans votre profil IceScrum
-              ("My Account") sous l'onglet 'API token'
+              Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'
             </p>
           </li>
           <li>
-            Un tableau contenant les codes Icescrum des projets que vous voulez
-            suivre, genre:
+            Un tableau contenant les codes Icescrum des projets que vous voulez suivre, genre:
             <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
             <p class="small text-secondary">
-              Vous trouverez la valeur à mettre à la place des XXXXXX dans la
-              barre d'adresse de votre navigateur quand vous êtes sur votre
-              projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)
+              Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand
+              vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)
             </p>
           </li>
         </ol>
         <p>
-          Attention: ajoutez <span class="code">*_icescrum_api*</span> dans le
-          fichier <span class="code">.gitignore</span> de votre repository.
+          Attention: ajoutez <span class="code">*_icescrum_api*</span> dans le fichier
+          <span class="code">.gitignore</span> de votre repository.
         </p>
         <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
       </div>
@@ -211,7 +171,7 @@
 
   const API_base_url = "https://cloud.icescrum.com/ws/project/";
   var API_project_url;
-  var dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }; // for date formatting
+  var dateFormatOptions = { year: "numeric", month: "short", day: "2-digit" }; // for date formatting
 
   // Init dropdown list from either an array of project IDs or a single ID
   if (typeof iceScrumToken == "undefined") {
@@ -272,10 +232,9 @@
           // use id as index for easy find
           stories[story.id] = {
             name: story.name,
-            type:
-              story.type == 0 ? "user" : story.type == 3 ? "tech" : "rec/urg",
+            type: story.type == 0 ? "user" : story.type == 3 ? "tech" : "rec/urg",
             value: story.value,
-            estimatedDate: story.estimatedDate,
+            estimatedDate: story.estimatedDate
           };
         });
       })
@@ -310,11 +269,11 @@
               let ratio = task.temps_effectif / task.temps_estimé;
               task.facile = ratio < 0.5;
               task.durdur = ratio > 1.5;
-              if (task.terminée_le != "?") task.terminée_le = (new Date(task.terminée_le)).toLocaleDateString("fr-CH",dateFormatOptions)
+              if (task.terminée_le != "?")
+                task.terminée_le = new Date(task.terminée_le).toLocaleDateString("fr-CH", dateFormatOptions);
 
               if (task.story_id > 0) {
-                task.surprise =
-                  task.date_de_création > storyStarts[task.story_id]; // task was a surprise if it was created AFTER some tasks were already completed in this story
+                task.surprise = task.date_de_création > storyStarts[task.story_id]; // task was a surprise if it was created AFTER some tasks were already completed in this story
               }
             });
             // now feed those tasks to the pivot table
@@ -364,17 +323,13 @@
       effectuée_par: task.responsible ? task.responsible.firstName : "",
       temps_effectif: task.spent ? task.spent : "",
       temps_estimé: task.initial ? task.initial : "",
-      date_de_création: (new Date(task.dateCreated)).toLocaleDateString("fr-CH",dateFormatOptions),
-      type_story: task.parentStory
-        ? stories[task.parentStory.id].type
-        : "rec/urg",
+      date_de_création: new Date(task.dateCreated).toLocaleDateString("fr-CH", dateFormatOptions),
+      type_story: task.parentStory ? stories[task.parentStory.id].type : "rec/urg",
       terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : "?",
-      semaine: task.doneDate
-        ? getNumberOfWeek(task.doneDate.substring(0, 10))
-        : "?",
+      semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : "?",
       remarque: task.notes ? task.notes : "",
       surprise: task.surprise,
-      tag: task.tags.length == 0 ? "" : task.tags[0], // only one tag can be taken into account
+      tag: task.tags.length == 0 ? "" : task.tags[0] // only one tag can be taken into account
     });
 
     return res;
@@ -390,19 +345,14 @@
     date = new Date(Date.parse(date));
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
     const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-    return (
-      100 * (date.getFullYear() % 100) +
-      Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7)
-    );
+    return 100 * (date.getFullYear() % 100) + Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
   }
 
   /**
    * Add the class d-print-none to all elements of the pivot table that we don't want to see on the printed page
    */
   function printSetup() {
-    ["pvtAxisContainer", "pvtRenderer", "pvtUiCell", "btn"].forEach(function (
-      classname
-    ) {
+    ["pvtAxisContainer", "pvtRenderer", "pvtUiCell", "btn"].forEach(function (classname) {
       $("." + classname).each(function (index, element) {
         element.classList.add("d-print-none");
       });
