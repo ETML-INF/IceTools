@@ -63,13 +63,13 @@
           title="Le développeur s'assure que son pair connaît et comprend suffisamment bien le contexte de son travail pour que la revue soit pertinente"
           >Mise en contexte</label
         >
-        <input id="rngContext" type="range" class="range neutral" min="0" max="100" />
+        <input id="rngContext" type="range" class="range" min="0" max="100" />
       </div>
       <div class="p-3">
         <label for="rngDemo" title="Le développeur montre tout ou partie de ce qu'il a réalisé en action"
           >Démonstration</label
         >
-        <input id="rngDemo" type="range" class="range neutral" min="0" max="100" />
+        <input id="rngDemo" type="range" class="range" min="0" max="100" />
       </div>
       <div class="p-3">
         <label
@@ -77,7 +77,7 @@
           title="Inventaire des (groupes de) fichiers qui ont été modifiés. Il est fortement conseillé d'avoir recours à des outils comme git compare pour se faciliter la tâche"
           >Identification des sources</label
         >
-        <input id="rngSrc" type="range" class="range neutral" min="0" max="100" />
+        <input id="rngSrc" type="range" class="range" min="0" max="100" />
       </div>
       <div class="p-3">
         <label
@@ -85,7 +85,15 @@
           title="Les explications orales fournies en parcourant le code sont-elles clairement formulées ? Sont-elles utiles ? Pertinentes ?"
           >Clarté des explications</label
         >
-        <input id="rngExp" type="range" class="range neutral" min="0" max="100" />
+        <input id="rngExp" type="range" class="range" min="0" max="100" />
+      </div>
+      <div class="p-3">
+        <label
+          for="rngCov"
+          title="Les explications orales fournies couvrent-elle tous les points importants ? A-t-on revu une majorité (si pas la totalité) des sources identifiée ?"
+          >Couverture</label
+        >
+        <input id="rngCov" type="range" class="range" min="0" max="100" />
       </div>
       <div class="p-3">
         <label
@@ -93,7 +101,7 @@
           title="L'implémentation est-elle bonne ? Judicieuse ? performante ? Si elle ne l'est pas mais de manière consciente, cela est-il visible quelque part ('// TODO') ?"
           >Dette technique</label
         >
-        <input id="rngExp" type="range" class="range neutral" min="0" max="100" />
+        <input id="rngExp" type="range" class="range" min="0" max="100" />
       </div>
       <div class="p-3">
         <label
@@ -101,7 +109,7 @@
           title="La discussion entre les pairs est-elle un vrai échange ? Est-ce que le développeur se soucie que son pair comprend ce qu'il dit ? Est-ce qui'il est à son écoute ? Est-ce qu'il est ouvert à la critique ?"
           >Echange</label
         >
-        <input id="rngExch" type="range" class="range neutral" min="0" max="100" />
+        <input id="rngExch" type="range" class="range" min="0" max="100" />
       </div>
       <hr />
       <div id="cmdFinish" class="btn btn-sm btn-primary d-none">Finaliser</div>
