@@ -280,7 +280,7 @@
             $("#output").pivotUI(tasks, {
               rows: ["story", "terminée_le", "tâche", "remarque"],
               cols: [],
-              aggregatorName: "Sum",
+              aggregatorName: "Integer Sum",
               vals: ["temps_effectif"],
               rendererName: "Table"
             });
@@ -323,6 +323,8 @@
       effectuée_par: task.responsible ? task.responsible.firstName : "",
       temps_effectif: task.spent ? task.spent : "",
       temps_estimé: task.initial ? task.initial : "",
+      temps_effectif_h: task.spent ? task.spent / 60 : "",
+      temps_estimé_h: task.initial ? task.initial / 60 : "",
       date_de_création: new Date(task.dateCreated).toLocaleDateString("fr-CH", dateFormatOptions),
       type_story: task.parentStory ? stories[task.parentStory.id].type : "rec/urg",
       terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : "?",
