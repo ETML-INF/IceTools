@@ -35,6 +35,16 @@
       label {
         width: 200px;
       }
+
+      @media print {
+        .noprint {
+          display: none;
+        }
+        div {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -64,12 +74,14 @@
           >Mise en contexte</label
         >
         <input id="rngContext" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <div class="p-3">
         <label for="rngDemo" title="Le développeur montre tout ou partie de ce qu'il a réalisé en action"
           >Démonstration</label
         >
         <input id="rngDemo" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <div class="p-3">
         <label
@@ -78,6 +90,7 @@
           >Identification des sources</label
         >
         <input id="rngSrc" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <div class="p-3">
         <label
@@ -86,6 +99,7 @@
           >Clarté des explications</label
         >
         <input id="rngExp" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <div class="p-3">
         <label
@@ -94,6 +108,7 @@
           >Couverture</label
         >
         <input id="rngCov" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <div class="p-3">
         <label
@@ -102,6 +117,7 @@
           >Dette technique</label
         >
         <input id="rngExp" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <div class="p-3">
         <label
@@ -110,6 +126,7 @@
           >Echange</label
         >
         <input id="rngExch" type="range" class="range" min="0" max="100" />
+        <div><textarea cols="50"></textarea></div>
       </div>
       <hr />
       <div id="cmdFinish" class="btn btn-sm btn-primary d-none">Finaliser</div>
@@ -127,6 +144,11 @@
     divTopic.innerHTML = "Au sujet de " + txtSubj.value;
     for (var range of document.getElementsByClassName("range")) {
       range.disabled = true;
+    }
+    let comments = document.getElementsByTagName("textarea");
+    for (i = comments.length - 1; i >= 0; i--) {
+      // work backward because of destruction of nodes on the way
+      comments[i].parentNode.innerHTML = comments[i].value;
     }
   });
 
