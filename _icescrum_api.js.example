@@ -1,5 +1,13 @@
-var iceScrumToken = '...' // Get it from IceScrum > MyAccount > Account > API tokens
-projectIds = [ // Get them from each project > Settings > Your Project > Key
+// A token is required to authenticate your requests
+// Get it from IceScrum > MyAccount > Account > API tokens
+var iceScrumToken = '...' 
+
+// You can use IceScrub utils with the following list of projects
+// Get their IDs from each project > Settings > Your Project > Key
+projectIds = [ 
     '...',
     '...'
 ]
+
+// Select the backend to use
+const API_base_url = "https://cloud.icescrum.com/ws/project/";
