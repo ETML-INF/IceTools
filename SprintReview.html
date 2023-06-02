@@ -71,7 +71,7 @@
 
     // ============ Initialization =================
 
-    var API_project_url
+    if (typeof(API_base_url) == 'undefined') alert("L'adresse du serveur IceScrum n'est pas définie. Vérifiez votre configuration (comparez-la avec l'exemple)")
 
     // Init dropdown list from either an array of project IDs or a single ID
     if (typeof (iceScrumToken) == 'undefined')
