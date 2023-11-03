@@ -10,4 +10,4 @@ projectIds = [
 ]
 
 // Select the backend to use
-const API_base_url = "https://cloud.icescrum.com/ws/project/";
+const API_base_url = "https://etml.icescrum.com/ws/project/";
