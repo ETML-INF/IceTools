@@ -160,7 +160,7 @@
     </div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
-      V2.1, Feb 2023, Powered by l'excellentissime
+      V2.2, Nov 2023, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
       de Nicolas Kruchten
     </div>
@@ -169,7 +169,8 @@
 <script>
   // ============ Initialization =================
 
-  if (typeof(API_base_url) == 'undefined') alert("L'adresse du serveur IceScrum n'est pas définie. Vérifiez votre configuration (comparez-la avec l'exemple)")
+  if (typeof API_base_url == "undefined")
+    alert("L'adresse du serveur IceScrum n'est pas définie. Vérifiez votre configuration (comparez-la avec l'exemple)");
   var dateFormatOptions = { year: "numeric", month: "short", day: "2-digit" }; // for date formatting
 
   // Init dropdown list from either an array of project IDs or a single ID
@@ -233,6 +234,7 @@
             name: story.name,
             type: story.type == 0 ? "user" : story.type == 3 ? "tech" : "rec/urg",
             value: story.value,
+            feature: story.feature ? story.feature.name : "Aucune",
             estimatedDate: story.estimatedDate
           };
         });
@@ -311,7 +313,11 @@
     storyname = "?";
     if (task.type == 10) storyname = "Récurrente";
     if (task.type == 11) storyname = "Urgente";
-    if (task.parentStory) storyname = task.parentStory.name;
+    task.feature = "Aucune";
+    if (task.parentStory) {
+      storyname = task.parentStory.name;
+      task.feature = stories[task.parentStory.id].feature;
+    }
 
     res.push({
       tâche: task.name,
@@ -319,6 +325,7 @@
       story_id: task.parentStory ? task.parentStory.id : 0, // might be useful if stories have the same name in different sprints
       release: task.sprint.parentRelease ? task.sprint.parentRelease.name : "?",
       sprint: task.sprint.index,
+      feature: task.feature,
       effectuée_par: task.responsible ? task.responsible.firstName : "",
       temps_effectif: task.spent ? task.spent : "",
       temps_estimé: task.initial ? task.initial : "",
