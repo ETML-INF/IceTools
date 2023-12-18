@@ -44,6 +44,26 @@
         padding: 4px;
         margin: 2px;
       }
+
+      .cartoucheTable {
+        border: 2px solid black;
+        margin: 5px;
+      }
+
+      .cartoucheHeader {
+        border: 1px solid black;
+        background-color: lightgray;
+        padding: 3px;
+        width: 80px;
+        -webkit-print-color-adjust: exact !important;
+      }
+
+      .cartoucheValue {
+        border: 1px solid black;
+        padding: 3px;
+        width: 80px;
+      }
+
       @media print {
         @page {
           size: landscape;
@@ -158,6 +178,7 @@
         Chargement de données depuis IceScrum...
       </div>
     </div>
+    <div id="divCartouche"></div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
       V2.2, Nov 2023, Powered by l'excellentissime
@@ -207,10 +228,36 @@
         return response.json();
       })
       .then(function (data) {
+        // Extract cartouche info from description if any
+        fillCartouche(data.description);
         spnProjName.innerText = "Journal de travail " + data.name;
         document.title = "Journal de travail " + data.name;
       });
     loadData();
+  }
+
+  function fillCartouche(description) {
+    let cstart = description.indexOf("{");
+    let cend = description.indexOf("}");
+    cartouchejson = description.substring(cstart, cend + 1).replace(/(\r\n|\n|\r)/gm, "");
+    if (cstart > 0 && cend > cstart) {
+      let cartTable = document.createElement("table");
+      cartTable.classList.add("cartoucheTable");
+      cartouche = JSON.parse(cartouchejson);
+      Object.keys(cartouche).forEach((e) => {
+        let cartRow = document.createElement("tr");
+        let cartCell1 = document.createElement("td");
+        cartCell1.classList.add("cartoucheHeader");
+        cartCell1.innerText = e;
+        let cartCell2 = document.createElement("td");
+        cartCell2.innerText = cartouche[e];
+        cartCell2.classList.add("cartoucheValue");
+        cartRow.appendChild(cartCell1);
+        cartRow.appendChild(cartCell2);
+        cartTable.appendChild(cartRow);
+      });
+      divCartouche.appendChild(cartTable);
+    }
   }
 
   function loadData() {
