@@ -300,9 +300,6 @@
               let ratio = task.temps_effectif / task.temps_estimé;
               task.facile = ratio < 0.5;
               task.durdur = ratio > 1.5;
-              if (task.terminée_le != "?")
-                task.terminée_le = new Date(task.terminée_le).toLocaleDateString("fr-CH", dateFormatOptions);
-
               if (task.story_id > 0) {
                 task.surprise = task.date_de_création > storyStarts[task.story_id]; // task was a surprise if it was created AFTER some tasks were already completed in this story
               }
@@ -328,13 +325,21 @@
   }
 
   // TODO Refactor this to use the onRefresh callback (which I haven't succeeded to make work)
-  setInterval(computeTotal, 1000); // keep the total number displayed in hours
-  // Convert the total of minutes to a proper HH:ii format
-  function computeTotal() {
+  setInterval(reformat, 1000); // keep the total number displayed in hours
+  // Changes the format the total of minutes to a proper HH:ii format
+  function reformat() {
     let totalCell = document.getElementsByClassName("pvtGrandTotal")[0];
     if (typeof totalCell == "undefined" || totalCell.innerText.indexOf("h") > 0) return;
     let totalMinutes = parseInt(totalCell.innerText.replace(/\D+/g, "")); // regex removes non-digits
     totalCell.innerText = Math.floor(totalMinutes / 60) + "h" + ("" + (totalMinutes % 60)).padStart(2, "0");
+
+    let labels = document.getElementsByClassName("pvtRowLabel");
+    reg = /^\d{4}-\d{2}-\d{2}$/;
+    Array.from(labels).forEach((cell) => {
+      if (reg.test(cell.innerText)) {
+        cell.innerText = new Date(cell.innerText).toLocaleDateString("fr-CH", dateFormatOptions);
+      }
+    });
   }
 
   /**
@@ -377,7 +382,6 @@
       surprise: task.surprise,
       tag: task.tags.length == 0 ? "" : task.tags[0] // only one tag can be taken into account
     });
-
     return res;
   }
 
