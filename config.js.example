@@ -1,0 +1,7 @@
+const iceScrumToken = "";
+const projectIds = ["", ""];
+const API_base_url = "https://etml.icescrum.com/ws/project/";
+const cartouche = {
+  Projet: "MyProject",
+  Date: "Avril 1912"
+};

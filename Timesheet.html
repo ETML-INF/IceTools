@@ -28,7 +28,7 @@
     />
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
 
-    <script src="_icescrum_api.js"></script>
+    <script src="config.js"></script>
     <style>
       #spinner {
         width: 80px;
@@ -61,7 +61,7 @@
       .cartoucheValue {
         border: 1px solid black;
         padding: 3px;
-        width: 80px;
+        width: 180px;
       }
 
       @media print {
@@ -142,21 +142,25 @@
         </p>
         <p>
           Vous devez créer un fichier nommé
-          <span class="code">_icescrum_api.js</span> dans le dossier où se trouve
+          <span class="code">config.js</span> dans le dossier où se trouve
           <span class="code">Timesheet.html</span>
         </p>
         <p>Dans ce fichier, vous devez mettre:</p>
         <ol>
           <li>
             Votre token d'accès à l'API Icescrum. Cela donne quelque chose genre:
-            <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
+            <span class="code">const iceScrumToken = '91030e0ea9a9ab58...'</span>
             <p class="small text-secondary">
               Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'
             </p>
           </li>
           <li>
-            Un tableau contenant les codes Icescrum des projets que vous voulez suivre, genre:
-            <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
+            Un tableau contenant le ou les projets que vous voulez suivre, genre:
+            <div class="code">
+              projects = [ <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{ projectKey: "XXXX" },<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{ projectKey: "YYYYY", cartouche: { Projet: "MyProject", Date: "Avril 1912" } }<br />]
+            </div>
             <p class="small text-secondary">
               Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand
               vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)
@@ -164,24 +168,16 @@
           </li>
         </ol>
         <p>
-          Attention: ajoutez <span class="code">*_icescrum_api*</span> dans le fichier
-          <span class="code">.gitignore</span> de votre repository.
+          Attention: ajoutez <span class="code">config.js</span> dans le fichier <span class="code">.gitignore</span> de
+          votre repository.
         </p>
         <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
-      </div>
-      <div id="spnLoading">
-        <img
-          src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
-          alt="Loading GIF by Mashable"
-          id="spinner"
-        />
-        Chargement de données depuis IceScrum...
       </div>
     </div>
     <div id="divCartouche"></div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
-      V2.2, Nov 2023, Powered by l'excellentissime
+      V3.0, Dec 2023, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
       de Nicolas Kruchten
     </div>
@@ -197,30 +193,23 @@
   // Init dropdown list from either an array of project IDs or a single ID
   if (typeof iceScrumToken == "undefined") {
     divBadConfig.classList.remove("d-none");
-    spnLoading.classList.add("d-none");
-  } else if (typeof projectIds !== "undefined") {
-    for (projectId of projectIds) {
+  } else if (typeof projects !== "undefined") {
+    for (project of projects) {
       let opt = document.createElement("option");
-      opt.text = projectId;
-      opt.value = projectId;
+      opt.text = project.projectKey;
+      opt.value = project.projectKey;
       selProj.appendChild(opt);
     }
     loadProject();
-  } else if (typeof projectId !== "undefined") {
-    let opt = document.createElement("option");
-    opt.text = projectId;
-    opt.value = projectId;
-    selProj.appendChild(opt);
-    loadProject();
   } else {
     divBadConfig.classList.remove("d-none");
-    spnLoading.classList.add("d-none");
   }
 
   selProj.addEventListener("change", loadProject);
 
   function loadProject() {
-    API_project_url = API_base_url + selProj.value;
+    let projData = projects.find((p) => p.projectKey == selProj.value);
+    API_project_url = API_base_url + projData.projectKey;
     output.innerHTML = "";
     // Project name
     fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
@@ -229,35 +218,29 @@
       })
       .then(function (data) {
         // Extract cartouche info from description if any
-        fillCartouche(data.description);
+        fillCartouche(projData.cartouche);
         spnProjName.innerText = "Journal de travail " + data.name;
         document.title = "Journal de travail " + data.name;
       });
     loadData();
   }
 
-  function fillCartouche(description) {
-    let cstart = description.indexOf("{");
-    let cend = description.indexOf("}");
-    cartouchejson = description.substring(cstart, cend + 1).replace(/(\r\n|\n|\r)/gm, "");
-    if (cstart > 0 && cend > cstart) {
-      let cartTable = document.createElement("table");
-      cartTable.classList.add("cartoucheTable");
-      cartouche = JSON.parse(cartouchejson);
-      Object.keys(cartouche).forEach((e) => {
-        let cartRow = document.createElement("tr");
-        let cartCell1 = document.createElement("td");
-        cartCell1.classList.add("cartoucheHeader");
-        cartCell1.innerText = e;
-        let cartCell2 = document.createElement("td");
-        cartCell2.innerText = cartouche[e];
-        cartCell2.classList.add("cartoucheValue");
-        cartRow.appendChild(cartCell1);
-        cartRow.appendChild(cartCell2);
-        cartTable.appendChild(cartRow);
-      });
-      divCartouche.appendChild(cartTable);
-    }
+  function fillCartouche(cartouche) {
+    cartTable = document.createElement("table");
+    cartTable.classList.add("cartoucheTable");
+    Object.keys(cartouche).forEach((e) => {
+      let cartRow = document.createElement("tr");
+      let cartCell1 = document.createElement("td");
+      cartCell1.classList.add("cartoucheHeader");
+      cartCell1.innerText = e;
+      let cartCell2 = document.createElement("td");
+      cartCell2.innerText = cartouche[e];
+      cartCell2.classList.add("cartoucheValue");
+      cartRow.appendChild(cartCell1);
+      cartRow.appendChild(cartCell2);
+      cartTable.appendChild(cartRow);
+    });
+    divCartouche.appendChild(cartTable);
   }
 
   function loadData() {
@@ -333,7 +316,6 @@
               rendererName: "Table"
             });
             printSetup();
-            spnLoading.classList.add("d-none"); // spinner off
           });
       })
       .catch(function (erreur) {
