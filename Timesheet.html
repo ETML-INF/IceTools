@@ -52,12 +52,12 @@
     </style>
   </head>
   <body>
-    <div class="pl-5 m-2 mt-4 text-center">
+    <div class="pl-5 m-2 mt-4 text-center d-print-none">
       <!-- Button trigger modal -->
       <button type="button" class="btn btn-small btn-light float-left" data-toggle="modal" data-target="#exampleModal">
         Aide
       </button>
-      <h1 id="spnProjName"></h1>
+      <h1 id="spnProjName" class="d-print-none"></h1>
       <select id="selProj" class="d-print-none"></select>
 
       <!-- Modal -->
@@ -159,6 +159,7 @@
       </div>
     </div>
     <div id="output" style="margin: 30px"></div>
+    <button id="cmdConvertHours" type="button" class="btn btn-small btn-success float-right">Total en heures</button>
     <div class="d-print-none" style="font-size: x-small">
       V2.2, Nov 2023, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
@@ -207,8 +208,8 @@
         return response.json();
       })
       .then(function (data) {
-        spnProjName.innerText = "Projet " + data.name;
-        document.title = "Projet " + data.name;
+        spnProjName.innerText = "Journal de travail " + data.name;
+        document.title = "Journal de travail " + data.name;
       });
     loadData();
   }
@@ -285,7 +286,6 @@
               vals: ["temps_effectif"],
               rendererName: "Table"
             });
-
             printSetup();
             spnLoading.classList.add("d-none"); // spinner off
           });
@@ -297,6 +297,15 @@
         console.log(erreur);
         //window.close()
       });
+  }
+
+  cmdConvertHours.addEventListener("click", () => computeTotal());
+
+  function computeTotal() {
+    let totalCell = document.getElementsByClassName("pvtGrandTotal")[0];
+    if (typeof totalCell == "undefined") return;
+    let totalMinutes = parseInt(totalCell.innerText.replace(/\D+/g, "")); // regex removes non-digits
+    totalCell.innerText = Math.floor(totalMinutes / 60) + "h" + ("" + (totalMinutes % 60)).padStart(2, "0");
   }
 
   /**
