@@ -159,7 +159,6 @@
       </div>
     </div>
     <div id="output" style="margin: 30px"></div>
-    <button id="cmdConvertHours" type="button" class="btn btn-small btn-success float-right">Total en heures</button>
     <div class="d-print-none" style="font-size: x-small">
       V2.2, Nov 2023, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
@@ -299,11 +298,12 @@
       });
   }
 
-  cmdConvertHours.addEventListener("click", () => computeTotal());
-
+  // TODO Refactor this to use the onRefresh callback (which I haven't succeeded to make work)
+  setInterval(computeTotal, 1000); // keep the total number displayed in hours
+  // Convert the total of minutes to a proper HH:ii format
   function computeTotal() {
     let totalCell = document.getElementsByClassName("pvtGrandTotal")[0];
-    if (typeof totalCell == "undefined") return;
+    if (typeof totalCell == "undefined" || totalCell.innerText.indexOf("h") > 0) return;
     let totalMinutes = parseInt(totalCell.innerText.replace(/\D+/g, "")); // regex removes non-digits
     totalCell.innerText = Math.floor(totalMinutes / 60) + "h" + ("" + (totalMinutes % 60)).padStart(2, "0");
   }
