@@ -9,7 +9,7 @@
       type="text/css"
     />
 
-    <script src="_icescrum_api.js"></script>
+    <script src="config.js"></script>
     <script src="https://momentjs.com/downloads/moment.js"></script>
     <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
@@ -42,45 +42,42 @@
     <div class="pl-5 m-2 mt-4 text-center">
       <h3>Projet</h3>
       <select id="selProj" class="m-3"></select>
-      <div
-        id="divBadConfig"
-        class="container d-none text-left m-5 p-3 bg-warning"
-      >
+      <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
         <h3>Oooops!!</h3>
         <p>
-          Si vous voyez ce texte, c'est que cette page a besoin d'informations
-          compémentaires de votre part pour fonctionner.
+          Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour
+          fonctionner.
         </p>
         <p>
           Vous devez créer un fichier nommé
-          <span class="code">_icescrum_api.js</span> dans le dossier où se
-          trouve <span class="code">Timesheet.html</span>
+          <span class="code">config.js</span> dans le dossier où se trouve
+          <span class="code">Timesheet.html</span>
         </p>
         <p>Dans ce fichier, vous devez mettre:</p>
         <ol>
           <li>
-            Votre token d'accès à l'API Icescrum. Cela donne quelque chose
-            genre:
-            <span class="code">var iceScrumToken = '91030e0ea9a9ab58...'</span>
+            Votre token d'accès à l'API Icescrum. Cela donne quelque chose genre:
+            <span class="code">const iceScrumToken = '91030e0ea9a9ab58...'</span>
             <p class="small text-secondary">
-              Vous générez ou retrouvez votre token dans votre profil IceScrum
-              ("My Account") sous l'onglet 'API token'
+              Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'
             </p>
           </li>
           <li>
-            Un tableau contenant les codes Icescrum des projets que vous voulez
-            suivre, genre:
-            <span class="code">projectIds = ['XXXXXX','YYYYYY']</span>
+            Un tableau contenant le ou les projets que vous voulez suivre, genre:
+            <div class="code">
+              projects = [ <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{ projectKey: "XXXX" },<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{ projectKey: "YYYYY", cartouche: { Projet: "MyProject", Date: "Avril 1912" } }<br />]
+            </div>
             <p class="small text-secondary">
-              Vous trouverez la valeur à mettre à la place des XXXXXX dans la
-              barre d'adresse de votre navigateur quand vous êtes sur votre
-              projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)
+              Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand
+              vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)
             </p>
           </li>
         </ol>
         <p>
-          Attention: ajoutez <span class="code">*_icescrum_api*</span> dans le
-          fichier <span class="code">.gitignore</span> de votre repository.
+          Attention: ajoutez <span class="code">config.js</span> dans le fichier <span class="code">.gitignore</span> de
+          votre repository.
         </p>
         <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
       </div>
@@ -90,14 +87,7 @@
         Analyse<br />
         <input name="rbtFormat" id="rbtTests" type="radio" /> Rapport de test<br />
       </div>
-      <button
-        id="cmdPrepare"
-        type="button"
-        onclick="loadProject()"
-        class="p-3 m-3"
-      >
-        Préparer
-      </button>
+      <button id="cmdPrepare" type="button" onclick="loadProject()" class="p-3 m-3">Préparer</button>
       <div id="spnLoading" class="d-none">
         <img
           src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
@@ -107,12 +97,7 @@
         Préparation ...
       </div>
       <br />
-      <button
-        id="cmdSaveAsWord"
-        type="button"
-        onclick="generate()"
-        class="d-none p-3 m-3"
-      >
+      <button id="cmdSaveAsWord" type="button" onclick="generate()" class="d-none p-3 m-3">
         Enregistrer au format Word
       </button>
     </div>
@@ -135,51 +120,46 @@
           next: "Normal",
           quickFormat: true,
           run: {
-            font: "Calibri",
-          },
-        },
-      ],
+            font: "Calibri"
+          }
+        }
+      ]
     },
     sections: [
       {
         properties: {},
-        children: [],
-      },
-    ],
+        children: []
+      }
+    ]
   };
 
   function generate() {
     docx.Packer.toBlob(new docx.Document(docContent)).then((blob) => {
-      console.log(blob);
       saveAs(blob, selProj.value + ".docx");
     });
   }
 
   // ============ Initialization of IceScrum interface =================
 
-  if (typeof(API_base_url) == 'undefined') alert("L'adresse du serveur IceScrum n'est pas définie. Vérifiez votre configuration (comparez-la avec l'exemple)")
+  if (typeof API_base_url == "undefined")
+    alert("L'adresse du serveur IceScrum n'est pas définie. Vérifiez votre configuration (comparez-la avec l'exemple)");
 
   // Init dropdown list from either an array of project IDs or a single ID
   if (typeof iceScrumToken == "undefined") {
     divBadConfig.classList.remove("d-none");
-    spnLoading.classList.add("d-none");
-  } else if (typeof projectIds !== "undefined") {
-    for (projectId of projectIds) {
+  } else if (typeof projects !== "undefined") {
+    for (project of projects) {
       let opt = document.createElement("option");
-      opt.text = projectId;
-      opt.value = projectId;
+      opt.text = project.projectKey;
+      opt.value = project.projectKey;
       selProj.appendChild(opt);
     }
-  } else if (typeof projectId !== "undefined") {
-    let opt = document.createElement("option");
-    opt.text = projectId;
-    opt.value = projectId;
-    selProj.appendChild(opt);
     loadProject();
   } else {
     divBadConfig.classList.remove("d-none");
-    spnLoading.classList.add("d-none");
   }
+
+  selProj.addEventListener("change", loadProject);
 
   function loadProject() {
     API_project_url = API_base_url + selProj.value;
@@ -210,13 +190,7 @@
       .then(async function (data) {
         // Process each story
         for (story of data) {
-          await fetch(
-            API_project_url +
-              "/story/" +
-              story.id +
-              "?icescrum-token=" +
-              iceScrumToken
-          )
+          await fetch(API_project_url + "/story/" + story.id + "?icescrum-token=" + iceScrumToken)
             .then(function (response) {
               return response.json();
             })
@@ -224,45 +198,46 @@
               // Create one table per story
               let testRows = [];
               await testsDoc(story.id, testRows, false); // prepare all tests as array of rows, without result
+              if (testRows.length > 0 && story.description != null && story.acceptanceTests_count > 0) {
+                // Prepare the table
+                const storyDoc = new docx.Table({
+                  rows: [
+                    new docx.TableRow({
+                      children: [
+                        new docx.TableCell({
+                          children: [new docx.Paragraph(story.description)]
+                        })
+                      ]
+                    }),
+                    new docx.TableRow({
+                      children: [
+                        new docx.TableCell({
+                          children: [
+                            new docx.Paragraph({
+                              text: "Tests d'acceptance: ",
+                              alignment: docx.AlignmentType.CENTER
+                            }),
+                            new docx.Table({
+                              rows: testRows,
+                              borders: docx.TableBorders.NONE
+                            })
+                          ]
+                        })
+                      ]
+                    })
+                  ]
+                });
 
-              // Prepare the table
-              const storyDoc = new docx.Table({
-                rows: [
-                  new docx.TableRow({
-                    children: [
-                      new docx.TableCell({
-                        children: [new docx.Paragraph(story.description)],
-                      }),
-                    ],
-                  }),
-                  new docx.TableRow({
-                    children: [
-                      new docx.TableCell({
-                        children: [
-                          new docx.Paragraph({
-                            text: "Tests d'acceptance: ",
-                            alignment: docx.AlignmentType.CENTER,
-                          }),
-                          new docx.Table({
-                            rows: testRows,
-                            borders: docx.TableBorders.NONE,
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
-                ],
-              });
-
-              // Stuff all this into the document
-              section.children.push(
-                new docx.Paragraph({
-                  text: story.name,
-                  heading: docx.HeadingLevel.HEADING_3,
-                })
-              );
-              section.children.push(storyDoc);
-              section.children.push(new docx.Paragraph(""));
+                // Stuff all this into the document
+                section.children.push(
+                  new docx.Paragraph({
+                    text: story.name,
+                    heading: docx.HeadingLevel.HEADING_3
+                  })
+                );
+                section.children.push(storyDoc);
+                section.children.push(new docx.Paragraph(""));
+              }
             })
             .catch(function (err) {
               console.log(err);
@@ -301,7 +276,7 @@
       section.children.push(
         new docx.Paragraph({
           text: "Sprint " + sprint.orderNumber,
-          heading: docx.HeadingLevel.HEADING_3,
+          heading: docx.HeadingLevel.HEADING_3
         })
       );
       for (story_id of sprint.stories_ids) {
@@ -314,9 +289,7 @@
 
   // Add the tests of one story to the section
   async function appendTestsOfStory(storyid, section) {
-    await fetch(
-      API_project_url + "/story/" + storyid + "?icescrum-token=" + iceScrumToken
-    )
+    await fetch(API_project_url + "/story/" + storyid + "?icescrum-token=" + iceScrumToken)
       .then(function (response) {
         return response.json();
       })
@@ -324,7 +297,7 @@
         section.children.push(
           new docx.Paragraph({
             text: story.name,
-            heading: docx.HeadingLevel.HEADING_4,
+            heading: docx.HeadingLevel.HEADING_4
           })
         );
         // Create one table per story
@@ -332,7 +305,7 @@
         await testsDoc(story.id, testRows, true); // prepare all tests as array of rows
         section.children.push(
           new docx.Table({
-            rows: testRows,
+            rows: testRows
           })
         );
       })
@@ -345,13 +318,7 @@
   // addResult is a bool that tells to add a cell with the result
   async function testsDoc(storyid, rows, addResult) {
     await new Promise((r) => setTimeout(r, 500)); // cooldown for IceScrum. Without it, the API starts throwing CORS exceptions after a dozen requests
-    await fetch(
-      API_project_url +
-        "/acceptanceTest/story/" +
-        storyid +
-        "?icescrum-token=" +
-        iceScrumToken
-    )
+    await fetch(API_project_url + "/acceptanceTest/story/" + storyid + "?icescrum-token=" + iceScrumToken)
       .then(function (response) {
         return response.json();
       })
@@ -361,31 +328,17 @@
             switch (test.state) {
               case 10:
                 resultCell = new docx.TableCell({
-                  children: [
-                  new docx.Paragraph(
-                      "OK"
-                    ),
-                    new docx.Paragraph(
-                      moment(test.lastUpdated).format("D MMM")
-                    ),
-                  ],
+                  children: [new docx.Paragraph("OK"), new docx.Paragraph(moment(test.lastUpdated).format("D MMM"))]
                 });
                 break;
               case 5:
                 resultCell = new docx.TableCell({
-                  children: [
-                  new docx.Paragraph(
-                      "ko"
-                    ),
-                    new docx.Paragraph(
-                      moment(test.lastUpdated).format("D MMM")
-                    ),
-                  ],
+                  children: [new docx.Paragraph("ko"), new docx.Paragraph(moment(test.lastUpdated).format("D MMM"))]
                 });
                 break;
               default:
                 resultCell = new docx.TableCell({
-                  children: [new docx.Paragraph("???")],
+                  children: [new docx.Paragraph("???")]
                 });
             }
 
@@ -393,28 +346,30 @@
               new docx.TableRow({
                 children: [
                   new docx.TableCell({
-                    children: [new docx.Paragraph(test.name)],
+                    children: [new docx.Paragraph(test.name)]
                   }),
                   new docx.TableCell({
-                    children: [new docx.Paragraph(test.description)],
+                    children: [new docx.Paragraph(test.description)]
                   }),
-                  resultCell,
-                ],
+                  resultCell
+                ]
               })
             );
           } else {
-            rows.push(
-              new docx.TableRow({
-                children: [
-                  new docx.TableCell({
-                    children: [new docx.Paragraph(test.name)],
-                  }),
-                  new docx.TableCell({
-                    children: [new docx.Paragraph(test.description)],
-                  }),
-                ],
-              })
-            );
+            if (test.description != null) {
+              rows.push(
+                new docx.TableRow({
+                  children: [
+                    new docx.TableCell({
+                      children: [new docx.Paragraph(test.name)]
+                    }),
+                    new docx.TableCell({
+                      children: [new docx.Paragraph(test.description)]
+                    })
+                  ]
+                })
+              );
+            }
           }
         }
       })
