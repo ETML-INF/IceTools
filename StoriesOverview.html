@@ -87,7 +87,6 @@
         Analyse<br />
         <input name="rbtFormat" id="rbtTests" type="radio" /> Rapport de test<br />
       </div>
-      <button id="cmdPrepare" type="button" onclick="loadProject()" class="p-3 m-3">Préparer</button>
       <div id="spnLoading" class="d-none">
         <img
           src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
@@ -97,11 +96,9 @@
         Préparation ...
       </div>
       <br />
-      <button id="cmdSaveAsWord" type="button" onclick="generate()" class="d-none p-3 m-3">
-        Enregistrer au format Word
-      </button>
+      <button id="cmdSaveAsWord" type="button" onclick="generate()" class="p-3 m-3">Enregistrer</button>
     </div>
-    <div style="font-size: x-small">V2.0</div>
+    <div style="font-size: x-small">V3.0</div>
   </body>
 </html>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -133,7 +130,8 @@
     ]
   };
 
-  function generate() {
+  async function generate() {
+    await loadProject();
     docx.Packer.toBlob(new docx.Document(docContent)).then((blob) => {
       saveAs(blob, selProj.value + ".docx");
     });
@@ -154,28 +152,26 @@
       opt.value = project.projectKey;
       selProj.appendChild(opt);
     }
-    loadProject();
   } else {
     divBadConfig.classList.remove("d-none");
   }
 
-  selProj.addEventListener("change", loadProject);
-
-  function loadProject() {
+  async function loadProject() {
     API_project_url = API_base_url + selProj.value;
     // Project name
-    fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
+    await fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
       .then(function (response) {
         return response.json();
       })
-      .then(function (data) {
-        cmdPrepare.classList.add("d-none");
+      .then(async function (data) {
         spnLoading.classList.remove("d-none");
         document.title = "Projet " + data.name;
         if (rbtAnalysis.checked) {
-          buildAnalysisContent(docContent.sections[0]);
+          console.log("analysis");
+          await buildAnalysisContent(docContent.sections[0]);
         } else {
-          buildTestReportContent(docContent.sections[0]);
+          console.log("test report");
+          await buildTestReportContent(docContent.sections[0]);
         }
       });
   }
@@ -244,7 +240,6 @@
             });
         }
         spnLoading.classList.add("d-none");
-        cmdSaveAsWord.classList.remove("d-none");
       })
       .catch(function (erreur) {
         alert(
@@ -284,7 +279,6 @@
       }
     }
     spnLoading.classList.add("d-none");
-    cmdSaveAsWord.classList.remove("d-none");
   }
 
   // Add the tests of one story to the section
