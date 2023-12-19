@@ -326,14 +326,16 @@
   }
 
   // TODO Refactor this to use the onRefresh callback (which I haven't succeeded to make work)
-  setInterval(reformat, 1000); // keep the total number displayed in hours
-  // Changes the format the total of minutes to a proper HH:ii format
-  function reformat() {
+  setInterval(repaint, 1000);
+  // Do cosmetic changes
+  function repaint() {
+    // Format total as HH:ii
     let totalCell = document.getElementsByClassName("pvtGrandTotal")[0];
     if (typeof totalCell == "undefined" || totalCell.innerText.indexOf("h") > 0) return;
     let totalMinutes = parseInt(totalCell.innerText.replace(/\D+/g, "")); // regex removes non-digits
     totalCell.innerText = Math.floor(totalMinutes / 60) + "h" + ("" + (totalMinutes % 60)).padStart(2, "0");
 
+    // Format date fields from 2022-02-22 to 22 fév. 2022
     let labels = document.getElementsByClassName("pvtRowLabel");
     reg = /^\d{4}-\d{2}-\d{2}$/;
     Array.from(labels).forEach((cell) => {
@@ -341,6 +343,17 @@
         cell.innerText = new Date(cell.innerText).toLocaleDateString("fr-CH", dateFormatOptions);
       }
     });
+
+    // hide unused controls
+    document.getElementsByClassName("pvtAggregator")[0].classList.add("d-none");
+    document.getElementsByClassName("pvtAttrDropdown")[0].classList.add("d-none");
+    document.getElementsByClassName("pvtRowOrder")[0].classList.add("d-none");
+    document.getElementsByClassName("pvtColOrder")[0].classList.add("d-none");
+    document.getElementsByClassName("pvtRenderer")[0].classList.add("d-none");
+
+    // change some texts
+    document.getElementsByClassName("pvtTotalLabel")[0].innerText = "Durée [min]";
+    document.getElementsByClassName("pvtTotalLabel")[1].innerText = "Total";
   }
 
   /**
