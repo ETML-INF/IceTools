@@ -379,15 +379,12 @@
     res.push({
       tâche: task.name,
       story: storyname,
-      story_id: task.parentStory ? task.parentStory.id : 0, // might be useful if stories have the same name in different sprints
+      story_id: task.parentStory ? task.parentStory.id : 0, // useful when stories have the same name in different sprints
       release: task.sprint.parentRelease ? task.sprint.parentRelease.name : "?",
       sprint: task.sprint.index,
       feature: task.feature,
       effectuée_par: task.responsible ? task.responsible.firstName : "",
-      temps_effectif: task.spent ? task.spent : "",
       temps_estimé: task.initial ? task.initial : "",
-      temps_effectif_h: task.spent ? (task.spent / 60).toFixed(2) : "",
-      temps_estimé_h: task.initial ? (task.initial / 60).toFixed(2) : "",
       date_de_création: new Date(task.dateCreated).toLocaleDateString("fr-CH", dateFormatOptions),
       type_story: task.parentStory ? stories[task.parentStory.id].type : "rec/urg",
       terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : "?",
