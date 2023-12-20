@@ -1,7 +1,14 @@
-const iceScrumToken = "";
-const projectIds = ["", ""];
+const iceScrumToken = "e40edb162e7d479da7048b4066c9575b";
+// 
+const projects = [
+  { projectKey: "...", cartouche: {} },
+  {
+    projectKey: "...",
+    cartouche: {
+      Projet: "...",
+      Module: "...",
+      ...: "..."        // You can add any field you like in your cartouche
+    }
+  }
+];
 const API_base_url = "https://etml.icescrum.com/ws/project/";
-const cartouche = {
-  Projet: "MyProject",
-  Date: "Avril 1912"
-};
