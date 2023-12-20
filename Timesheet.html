@@ -312,7 +312,8 @@
               cols: [],
               aggregatorName: "Integer Sum",
               vals: ["temps_effectif"],
-              rendererName: "Table"
+              rendererName: "Table",
+              onRefresh: repaint
             });
             printSetup();
           });
@@ -326,9 +327,7 @@
       });
   }
 
-  // TODO Refactor this to use the onRefresh callback (which I haven't succeeded to make work)
-  setInterval(repaint, 1000);
-  // Do cosmetic changes
+  // Do cosmetic changes upon data refresh
   function repaint() {
     // Format total as HH:ii
     let totalCell = document.getElementsByClassName("pvtGrandTotal")[0];
@@ -384,6 +383,7 @@
       release: task.sprint.parentRelease ? task.sprint.parentRelease.name : "?",
       sprint: task.sprint.index,
       feature: task.feature,
+      temps_effectif: task.spent ? task.spent : "",
       effectuée_par: task.responsible ? task.responsible.firstName : "",
       temps_estimé: task.initial ? task.initial : "",
       date_de_création: new Date(task.dateCreated).toLocaleDateString("fr-CH", dateFormatOptions),
