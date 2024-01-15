@@ -1,4 +1,4 @@
-# IceScrub
+# IceTools
 Set of simple HTML/JS pages that help you manage specific aspects of your IceScrum projects in a simplified interface
 
 ### Timesheet
