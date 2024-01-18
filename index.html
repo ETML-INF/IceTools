@@ -22,34 +22,140 @@
         margin: 40px;
       }
     </style>
-    <script src="_icescrum_api.js"></script>
+    <script src="config.js"></script>
   </head>
   <body>
-    <h3>IceTools</h3>
-    <p>
-      Set of simple HTML/JS pages that help you manage specific aspects of your IceScrum projects in a simplified
-      interface
-    </p>
-    <table>
-      <tr>
-        <td><a href="SprintReview.html">Sprint Review</a></td>
-        <td>
-          Collects the stories that are in the state 'In Review' and presents them with their acceptance tests. In other
-          words: it is the agenda of your sprint review!
-        </td>
-      </tr>
-      <tr>
-        <td><a href="StoriesToWord.html">Stories to Word</a></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td><a href="Timesheet.html">Time sheet</a></td>
-        <td>
-          It collects tasks data and lets you filter and present it using a pivot table.<br />
-          It is mainly meant to produce the 'Journal de travail' of a project<br />
-          Requires that you activate and use the 'Time Tracking' app in IceScrum.
-        </td>
-      </tr>
-    </table>
+    <div class="container">
+      <h3>IceTools</h3>
+      <p>
+        Set of simple HTML/JS pages that help you manage specific aspects of your IceScrum projects in a simplified
+        interface
+      </p>
+      <table>
+        <tr>
+          <td><a href="SprintReview.html">Sprint Review</a></td>
+          <td>
+            Collects the stories that are in the state 'In Review' and presents them with their acceptance tests. In
+            other words: it is the agenda of your sprint review!
+          </td>
+        </tr>
+        <tr>
+          <td><a href="StoriesToWord.html">Stories to Word</a></td>
+          <td>Gathers the stories of your project and puts them in a Word document, with a basic formatting: tables</td>
+        </tr>
+        <tr>
+          <td><a href="Timesheet.html">Time sheet</a></td>
+          <td>
+            It collects tasks data and lets you filter and present it using a pivot table.<br />
+            It is mainly meant to produce the 'Journal de travail' of a project<br />
+            Requires that you activate and use the 'Time Tracking' app in IceScrum.
+          </td>
+        </tr>
+      </table>
+      <div id="divBadConfig" class="container d-none text-left m-5 p-3 bg-warning">
+        <h3>Oooops!!</h3>
+        <p>
+          Si vous voyez ce texte, c'est que cette page a besoin d'informations compémentaires de votre part pour
+          fonctionner.
+        </p>
+        <p>
+          Vous devez créer un fichier nommé
+          <span class="code">config.js</span> dans le dossier où se trouve
+          <span class="code">Timesheet.html</span>
+        </p>
+        <p>Dans ce fichier, vous devez mettre:</p>
+        <ol>
+          <li>
+            Votre token d'accès à l'API Icescrum. Cela donne quelque chose genre:
+            <span class="code">const iceScrumToken = '91030e0ea9a9ab58...'</span>
+            <p class="small text-secondary">
+              Vous générez ou retrouvez votre token dans votre profil IceScrum ("My Account") sous l'onglet 'API token'
+            </p>
+          </li>
+          <li>
+            Un tableau contenant le ou les projets que vous voulez suivre, genre:
+            <div class="code">
+              projects = [ <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{ projectKey: "XXXX" },<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{ projectKey: "YYYYY", cartouche: { Projet: "MyProject", Date: "Avril 1912" } }<br />]
+            </div>
+            <p class="small text-secondary">
+              Vous trouverez la valeur à mettre à la place des XXXXXX dans la barre d'adresse de votre navigateur quand
+              vous êtes sur votre projet Icescrum (https://icescrum.cpnv.ch/p/XXXXXX/#/project)
+            </p>
+          </li>
+        </ol>
+        <p>
+          Attention: ajoutez <span class="code">config.js</span> dans le fichier <span class="code">.gitignore</span> de
+          votre repository.
+        </p>
+        <p>Si vous ne le faites pas, votre token sera publié sur Github!</p>
+      </div>
+      <div id="divGoodConfig" class="container d-none text-left m-5 p-3"></div>
+    </div>
   </body>
 </html>
+<script>
+  validateConfig();
+
+  async function validateConfig() {
+    if (typeof iceScrumToken == "undefined") {
+      divBadConfig.classList.remove("d-none");
+    } else if (typeof projects !== "undefined") {
+      let tok = await testToken(projects[0].projectKey);
+      if (tok) {
+        title = document.createElement("h4");
+        title.innerText = projects.length == 1 ? "Votre projet" : "Vos projets";
+        divGoodConfig.appendChild(title);
+        for (project of projects) {
+          let div = document.createElement("div");
+          divGoodConfig.appendChild(div);
+          icproj = await getProject(project.projectKey);
+          if (icproj) {
+            div.innerText = icproj.name;
+          } else {
+            div.innerText = "La clé " + project.projectKey + " ne correspond à aucun projet IceScrum";
+            div.classList.add("bg-warning");
+          }
+        }
+        divGoodConfig.classList.remove("d-none");
+      } else {
+        divBadConfig.classList.remove("d-none");
+      }
+    } else {
+      divBadConfig.classList.remove("d-none");
+    }
+  }
+
+  function getProject(pkey) {
+    API_project_url = API_base_url + pkey;
+    // Project name
+    return fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (data) {
+        return data;
+      })
+      .catch(function (error) {
+        return null;
+      });
+    loadData();
+  }
+
+  async function testToken(pkey) {
+    API_project_url = API_base_url + pkey;
+    return await fetch(API_project_url + "/?icescrum-token=" + iceScrumToken)
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function () {
+        console.log("ok");
+        return true;
+      })
+      .catch(function () {
+        console.log("ko");
+        return false;
+      });
+  }
+</script>
