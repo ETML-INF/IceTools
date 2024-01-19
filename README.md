@@ -12,10 +12,6 @@ It is mainly meant to produce the 'Journal de travail' of a project
 This page collects the stories that are in the state 'In Review' and presents them with their acceptance tests.  
 In other words: it is the agenda of your sprint review!
 
-### TestSheet
+### StoriesToWord
 
-Produces the list of all test results of the project
-
-### StoriesOverview
-
-Made to help searching. When you know that there's something that you've done or planned but have a hard time finding back in IceScrum, load that page and use ctrl-F.
+Lets you export stories in nice Word tables for your documentation
