@@ -286,11 +286,18 @@
 
   // Do cosmetic changes upon data refresh
   function repaint() {
-    // Format total as HH:ii
+    // Format total cells as HH:ii
+    var cells = new Set([
+      ...document.getElementsByClassName("pvtGrandTotal"),
+      ...document.getElementsByClassName("pvtTotal")
+    ]);
+    cells.forEach((cell) => {
+      if (cell.innerText.indexOf("h") < 0) {
+        let totalMinutes = parseInt(cell.innerText.replace(/\D+/g, "")); // regex removes non-digits
+        cell.innerText = Math.floor(totalMinutes / 60) + "h" + ("" + (totalMinutes % 60)).padStart(2, "0");
+      }
+    });
     let totalCell = document.getElementsByClassName("pvtGrandTotal")[0];
-    if (typeof totalCell == "undefined" || totalCell.innerText.indexOf("h") > 0) return;
-    let totalMinutes = parseInt(totalCell.innerText.replace(/\D+/g, "")); // regex removes non-digits
-    totalCell.innerText = Math.floor(totalMinutes / 60) + "h" + ("" + (totalMinutes % 60)).padStart(2, "0");
 
     // Format date fields from 2022-02-22 to 22 fév. 2022
     let labels = document.getElementsByClassName("pvtRowLabel");
