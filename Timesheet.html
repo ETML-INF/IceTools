@@ -410,7 +410,7 @@
                 temps_estimé: null,
                 date_de_création: abs[1].toLocaleDateString("fr-CH", dateFormatOptions),
                 type_story: null,
-                terminée_le: abs[1].toLocaleDateString("fr-CH", dateFormatOptions),
+                terminée_le: abs[1].toISOString().slice(0, 10),
                 semaine: getNumberOfWeek(abs[1]),
                 remarque: abs[3],
                 surprise: true,
