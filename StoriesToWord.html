@@ -190,6 +190,11 @@
                     heading: docx.HeadingLevel.HEADING_3
                   })
                 );
+                section.children.push(
+                  new docx.Paragraph({
+                    text: "(Auteur: " + story.creator.firstName + " " + story.creator.lastName + ")"
+                  })
+                );
                 section.children.push(storyDoc);
                 section.children.push(new docx.Paragraph(""));
               }

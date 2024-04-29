@@ -129,6 +129,12 @@
                     <li>'story_id' permet de différencier deux stories qui ont le même nom</li>
                   </ul>
                 </li>
+                <li>
+                  Pour faire apparaître les absences dans le journal, il faut les inscrire dans la sprint retrospective
+                  en respectant le format précis que voici:<br />
+                  "Absence: &lt;personne&gt;, &lt;date&gt;, &lt;durée (min)&gt;, &lt;raison&gt;"<br />
+                  Exemple: "Absence: jules,27.2.2024,225,malade"
+                </li>
               </ul>
             </div>
             <div class="modal-footer">
@@ -141,7 +147,7 @@
     <div class="d-flex justify-content-center"><div id="divCartouche"></div></div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
-      V3.0, Dec 2023, Powered by l'excellentissime
+      V3.1, Apr 2024, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
       de Nicolas Kruchten
     </div>
@@ -237,7 +243,7 @@
           .then(function (response) {
             return response.json();
           })
-          .then(function (data) {
+          .then(async function (data) {
             data.forEach(function (task) {
               // Determine the actual start of work on the story
               if (task.parentStory && task.inProgressDate) {
@@ -254,6 +260,7 @@
                 tasks.push(...prepareTaskForPivot(task, stories)); // must spread before pushing, otherwise we build an array of array of objects (try it if you don't believe it)
               }
             });
+            await addAbsences(tasks);
           })
           .then(function () {
             // compute additional fields
@@ -361,6 +368,75 @@
       tag: task.tags.length == 0 ? "" : task.tags[0] // only one tag can be taken into account
     });
     return res;
+  }
+
+  // Add the absences as tasks
+  // Absences are extracted from the sprint retrospective, where the must be noted as 'Absence: toto, 23.3.2024, 240, blabla'
+
+  async function addAbsences(tasks) {
+    await fetch(API_project_url + "/sprint?icescrum-token=" + iceScrumToken) // Get all sprints
+      .then(function (response) {
+        return response.json();
+      })
+      .then((sprints) => {
+        const regex = /Absence:(.*?)(\n|$)/gi;
+        for (sprint of sprints) {
+          let match;
+          while ((match = regex.exec(sprint.retrospective)) !== null) {
+            // process one absence
+            let abs = match[1].trim().split(",");
+            abs[3] = abs.slice(3).join(","); // concatenate extra strings into index 3, in case there were commas in the reason part of the absence
+            let error = null;
+            abs[2] = parseInt(abs[2]);
+            error = abs[2] > 0 ? null : "Durée invalide";
+            dateparts = abs[1].trim().split("."); // expected date format: 'dd.mm.yyyy'
+            if (dateparts.length == 3) {
+              abs[1] = new Date(dateparts[2] + "-" + dateparts[1] + "-" + dateparts[0]);
+              if (!(abs[1].getFullYear() > 2000)) error = "Date invalide";
+            } else {
+              error = "Date invalide";
+            }
+            if (error == null) {
+              // Everything OK, store it
+              tasks.push({
+                tâche: "Absence",
+                story: "Administratif",
+                story_id: 0,
+                release: sprint.parentRelease,
+                sprint: sprint.index,
+                feature: null,
+                temps_effectif: abs[2],
+                effectuée_par: abs[0],
+                temps_estimé: null,
+                date_de_création: abs[1].toLocaleDateString("fr-CH", dateFormatOptions),
+                type_story: null,
+                terminée_le: abs[1].toISOString().slice(0, 10),
+                semaine: getNumberOfWeek(abs[1]),
+                remarque: abs[3],
+                surprise: true,
+                tag: "Absence"
+              });
+            } else {
+              alert(
+                "L'absence `" +
+                  match[1] +
+                  "` du sprint " +
+                  sprint.orderNumber +
+                  " est mal formulée:\n" +
+                  error +
+                  '\n\nRappel: le format est:\n\n  "Absence: <personne>, <date>, <durée (min)>, <raison>"\n  Exemple:\n  "Absence: jules,27.2.2024,225,malade"'
+              );
+            }
+          }
+        }
+      })
+      .catch(function (erreur) {
+        console.log(erreur);
+        alert(
+          "Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri"
+        );
+        window.location = "index.html";
+      });
   }
 
   /**
