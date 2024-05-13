@@ -126,10 +126,8 @@
         spnLoading.classList.remove("d-none");
         document.title = "Projet " + data.name;
         if (rbtAnalysis.checked) {
-          console.log("analysis");
           await buildAnalysisContent(docContent.sections[0]);
         } else {
-          console.log("test report");
           await buildTestReportContent(docContent.sections[0]);
         }
       });
@@ -153,50 +151,55 @@
               // Create one table per story
               let testRows = [];
               await testsDoc(story.id, testRows, false); // prepare all tests as array of rows, without result
-              if (testRows.length > 0 && story.description != null && story.acceptanceTests_count > 0) {
-                // Prepare the table
-                const storyDoc = new docx.Table({
-                  rows: [
-                    new docx.TableRow({
-                      children: [
-                        new docx.TableCell({
-                          children: [new docx.Paragraph(story.description)]
-                        })
-                      ]
-                    }),
-                    new docx.TableRow({
-                      children: [
-                        new docx.TableCell({
-                          children: [
-                            new docx.Paragraph({
-                              text: "Tests d'acceptance: ",
-                              alignment: docx.AlignmentType.CENTER
-                            }),
-                            new docx.Table({
-                              rows: testRows,
-                              borders: docx.TableBorders.NONE
-                            })
-                          ]
-                        })
-                      ]
-                    })
-                  ]
-                });
+              if (story.state > 1) {
+                // story is beyond the sandbox, keep it
+                if (testRows.length > 0 && story.description != null && story.acceptanceTests_count > 0) {
+                  // Prepare the table
+                  const storyDoc = new docx.Table({
+                    rows: [
+                      new docx.TableRow({
+                        children: [
+                          new docx.TableCell({
+                            children: [new docx.Paragraph(story.description)]
+                          })
+                        ]
+                      }),
+                      new docx.TableRow({
+                        children: [
+                          new docx.TableCell({
+                            children: [
+                              new docx.Paragraph({
+                                text: "Tests d'acceptance: ",
+                                alignment: docx.AlignmentType.CENTER
+                              }),
+                              new docx.Table({
+                                rows: testRows,
+                                borders: docx.TableBorders.NONE
+                              })
+                            ]
+                          })
+                        ]
+                      })
+                    ]
+                  });
 
-                // Stuff all this into the document
-                section.children.push(
-                  new docx.Paragraph({
-                    text: story.name,
-                    heading: docx.HeadingLevel.HEADING_3
-                  })
-                );
-                section.children.push(
-                  new docx.Paragraph({
-                    text: "(Auteur: " + story.creator.firstName + " " + story.creator.lastName + ")"
-                  })
-                );
-                section.children.push(storyDoc);
-                section.children.push(new docx.Paragraph(""));
+                  // Stuff all this into the document
+                  section.children.push(
+                    new docx.Paragraph({
+                      text: story.name,
+                      heading: docx.HeadingLevel.HEADING_3
+                    })
+                  );
+                  section.children.push(
+                    new docx.Paragraph({
+                      text: "(Auteur: " + story.creator.firstName + " " + story.creator.lastName + ")"
+                    })
+                  );
+                  section.children.push(storyDoc);
+                  section.children.push(new docx.Paragraph(""));
+                } else {
+                  alert("La story '" + story.name + "' est incomplète et a donc été ignorée");
+                }
               }
             })
             .catch(function (err) {
