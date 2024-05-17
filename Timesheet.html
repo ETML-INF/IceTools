@@ -28,7 +28,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css"
     />
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
-
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <script src="config.js"></script>
     <style>
       #spinner {
@@ -70,6 +70,16 @@
         @page {
           size: landscape;
         }
+      }
+      ol,
+      ul,
+      li {
+        margin-left: 10px;
+        margin-bottom: 0px;
+        padding: 0px;
+      }
+      p {
+        margin: 0px;
       }
     </style>
   </head>
@@ -147,7 +157,7 @@
     <div class="d-flex justify-content-center"><div id="divCartouche"></div></div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
-      V3.1, Apr 2024, Powered by l'excellentissime
+      V3.2, May 2024, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
       de Nicolas Kruchten
     </div>
@@ -157,7 +167,7 @@
   // ============ Initialization =================
 
   var dateFormatOptions = { year: "numeric", month: "short", day: "2-digit" }; // for date formatting
-
+  var markdownconverter = new showdown.Converter();
   // Init dropdown list from either an array of project IDs or a single ID
   if (typeof iceScrumToken == "undefined") {
     window.location = "index.html";
@@ -314,6 +324,8 @@
     Array.from(labels).forEach((cell) => {
       if (reg.test(cell.innerText)) {
         cell.innerText = new Date(cell.innerText).toLocaleDateString("fr-CH", dateFormatOptions);
+      } else {
+        cell.innerHTML = cell.innerText; // Render the html produced from markdown
       }
     });
 
@@ -351,6 +363,7 @@
 
     res.push({
       tâche: task.name,
+      description: task.description ? markdownconverter.makeHtml(task.description) : "",
       story: storyname,
       story_id: task.parentStory ? task.parentStory.id : 0, // useful when stories have the same name in different sprints
       release: task.sprint.parentRelease ? task.sprint.parentRelease.name : "?",
@@ -363,7 +376,7 @@
       type_story: task.parentStory ? stories[task.parentStory.id].type : "rec/urg",
       terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : "?",
       semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : "?",
-      remarque: task.notes ? task.notes : "",
+      remarque: task.notes ? markdownconverter.makeHtml(task.notes) : "",
       surprise: task.surprise,
       tag: task.tags.length == 0 ? "" : task.tags[0] // only one tag can be taken into account
     });
