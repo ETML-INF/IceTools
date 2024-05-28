@@ -149,6 +149,13 @@
                   Pour faire des listes numérotées, liste à puces ou hyperlien, il vous suffit d'écrire du markdown dans
                   les champs 'description' ou 'notes' de la tâche dans IceScrum
                 </li>
+                <li>
+                  Si vous avez oublié de terminer la tâche dans IceScrum le jour même et que vous le faites le
+                  lendemain, vous pouvez ajuster la date à laquelle la tâche apparaîtra dans le journal. Il suffit de
+                  mettre une ligne au tout début des notes de la tâche en respectant le format précis que voici:<br />
+                  "Date: &lt;date&gt;"<br />
+                  Exemple: "Date: 27.2.2024"
+                </li>
               </ul>
             </div>
             <div class="modal-footer">
@@ -161,7 +168,7 @@
     <div class="d-flex justify-content-center"><div id="divCartouche"></div></div>
     <div id="output" style="margin: 30px"></div>
     <div class="d-print-none" style="font-size: x-small">
-      V3.2, May 2024, Powered by l'excellentissime
+      V3.3, May 2024, Powered by l'excellentissime
       <a href="https://github.com/nicolaskruchten/pivottable">pivottable.js</a>
       de Nicolas Kruchten
     </div>
@@ -365,6 +372,37 @@
       task.feature = stories[task.parentStory.id].feature;
     }
 
+    // Apply date adjustment if required in the remarque
+    const fixdateregex = /^Date:(.*?)(\n|$)/gi;
+    let match;
+    if ((match = fixdateregex.exec(task.notes)) !== null && task.doneDate != null) {
+      let error = null;
+      // change the date
+      dateparts = match[1].trim().split("."); // expected date format: 'dd.mm.yyyy'
+      if (dateparts.length == 3) {
+        newdate = new Date(dateparts[2] + "-" + dateparts[1] + "-" + dateparts[0] + " 12:00"); // put it at noon, otherwise it will show on the day before when displayed in local time
+        if (!(newdate.getFullYear() > 2000)) error = "Date invalide";
+      } else {
+        error = "Date invalide";
+      }
+      if (error == null) {
+        // Everything OK, store it
+        task.notes = task.notes.split("\n").slice(1).join("\n"); // remove the 'command' from the notes
+        console.log(newdate);
+        task.doneDate = newdate.toISOString().slice(0, 10);
+      } else {
+        alert(
+          "Le changement de date `" +
+            match[1] +
+            "` de la tâche " +
+            task.name +
+            " est mal formulé:\n" +
+            error +
+            '\n\nRappel: le format est:\n\n  "Date: <date>"\n  Exemple:\n  "Date: 27.2.2024"'
+        );
+      }
+    }
+
     res.push({
       tâche: task.name,
       description: task.description ? markdownconverter.makeHtml(task.description) : "",
@@ -396,10 +434,10 @@
         return response.json();
       })
       .then((sprints) => {
-        const regex = /Absence:(.*?)(\n|$)/gi;
+        const absregex = /Absence:(.*?)(\n|$)/gi;
         for (sprint of sprints) {
           let match;
-          while ((match = regex.exec(sprint.retrospective)) !== null) {
+          while ((match = absregex.exec(sprint.retrospective)) !== null) {
             // process one absence
             let abs = match[1].trim().split(",");
             abs[3] = abs.slice(3).join(","); // concatenate extra strings into index 3, in case there were commas in the reason part of the absence
