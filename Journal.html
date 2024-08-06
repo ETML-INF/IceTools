@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Journal</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- external libs from cdnjs -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"
+    ></script>
+
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+      crossorigin="anonymous"
+    ></script>
+    <!-- PivotTable.js libs from ../dist -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css"
+    />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <script src="config.js"></script>
+    <style>
+      #spinner {
+        width: 80px;
+        height: 80px;
+        left: 0px;
+        top: 0px;
+        opacity: 1;
+      }
+
+      .code {
+        font-family: "Courier New";
+        font-weight: bolder;
+        padding: 4px;
+        margin: 2px;
+      }
+
+      .cartoucheTable {
+        border: 2px solid black;
+        margin: 5px;
+      }
+
+      .cartoucheHeader {
+        border: 1px solid black;
+        background-color: lightgray;
+        padding: 3px;
+        width: 100px;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .cartoucheValue {
+        border: 1px solid black;
+        padding: 3px;
+        width: 400px;
+      }
+
+      @media print {
+        @page {
+          size: landscape;
+        }
+      }
+      ol,
+      ul,
+      li {
+        margin-left: 10px;
+        margin-bottom: 0px;
+        padding: 0px;
+      }
+      p {
+        margin: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pl-5 m-2 mt-4 text-center d-print-none">
+      <!-- Button trigger modal -->
+      <button type="button" class="btn btn-small btn-light float-left" data-toggle="modal" data-target="#exampleModal">
+        Aide
+      </button>
+      <h1 id="spnProjName" class="d-print-none"></h1>
+      Télécharger le journal en markdown pour le projet
+      <select id="selProj" class="d-print-none"></select>
+
+      <!-- Modal -->
+      <div
+        class="modal fade"
+        id="exampleModal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Aide de Journal</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body text-left">
+              <ul>
+                <li>La configuration du cartouche se fait dans le fichier <span class="code">config.cs</span></li>
+                <li>
+                  Pour faire apparaître les absences dans le journal, il faut les inscrire dans la sprint retrospective
+                  en respectant le format précis que voici:<br />
+                  "Absence: &lt;personne&gt;, &lt;date&gt;, &lt;durée (min)&gt;, &lt;raison&gt;"<br />
+                  Exemple: "Absence: jules,27.2.2024,225,malade"
+                </li>
+                <li>
+                  Pour faire des listes numérotées, liste à puces ou hyperlien, il vous suffit d'écrire du markdown dans
+                  les champs 'description' ou 'notes' de la tâche dans IceScrum
+                </li>
+                <li>
+                  Si vous avez oublié de terminer la tâche dans IceScrum le jour même et que vous le faites le
+                  lendemain, vous pouvez ajuster la date à laquelle la tâche apparaîtra dans le journal. Il suffit de
+                  mettre une ligne au tout début des notes de la tâche en respectant le format précis que voici:<br />
+                  "Date: &lt;date&gt;"<br />
+                  Exemple: "Date: 27.2.2024"
+                </li>
+              </ul>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-center"><div id="divCartouche"></div></div>
+    <div id="output" style="margin: 30px"></div>
+  </body>
+</html>
+<script>
+  // ============ Initialization =================
+
+  var dateFormatOptions = { year: "numeric", month: "short", day: "2-digit" }; // for date formatting
+  var markdownconverter = new showdown.Converter();
+  var cartouche = null;
+
+  // Init dropdown list from either an array of project IDs or a single ID
+  if (typeof iceScrumToken == "undefined") {
+    window.location = "index.html";
+  } else if (typeof projects !== "undefined") {
+    let opt = document.createElement("option");
+    opt.text = "--- Choisir ---";
+    opt.value = 0;
+    selProj.appendChild(opt);
+    for (project of projects) {
+      let opt = document.createElement("option");
+      opt.text = project.projectKey;
+      opt.value = project.projectKey;
+      selProj.appendChild(opt);
+    }
+  } else {
+    window.location = "index.html";
+  }
+
+  selProj.addEventListener("change", loadProject);
+
+  function loadProject() {
+    let projData = projects.find((p) => p.projectKey == selProj.value);
+    API_project_url = API_base_url + projData.projectKey;
+    output.innerHTML = "";
+    // pre-build cartouche
+    cartouche = null;
+    if (Object.keys(projData.cartouche).length > 0) {
+      cartouche = "|||\n|---|---|\n";
+      Object.keys(projData.cartouche).forEach((e) => {
+        cartouche += "|";
+        cartouche += e;
+        cartouche += "|";
+        cartouche += projData.cartouche[e];
+        cartouche += "|\n";
+      });
+    }
+    loadData();
+  }
+
+  function loadData() {
+    let tasks = []; // all tasks, including urgent and recurrent ones. Tasks will be duplicated if they have multiple tags (one instance per tag value)
+    let stories = []; // the stories of the project. We need them so that we can get their type and value that are not in the task's parent story
+    let storyStarts = []; // the date at which the work has started on this story. Can't use story.inProgressDate, which is the date when the task was placed in the sprint backlog
+
+    // story-less tasks:
+    stories[10] = { name: "(Récurrentes)", tasks: [] };
+    stories[11] = { name: "(Urgentes)", tasks: [] };
+
+    // Get all stories
+    fetch(API_project_url + "/story?icescrum-token=" + iceScrumToken)
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (data) {
+        data.forEach(function (story) {
+          // use id as index for easy find
+          stories[story.id] = {
+            name: story.name,
+            type: story.type == 0 ? "user" : story.type == 3 ? "tech" : "rec/urg",
+            value: story.value,
+            feature: story.feature ? story.feature.name : "Aucune",
+            estimatedDate: story.estimatedDate
+          };
+        });
+      })
+      .then(function () {
+        // get all tasks
+        fetch(API_project_url + "/task?icescrum-token=" + iceScrumToken)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(async function (data) {
+            data.forEach(function (task) {
+              // Determine the actual start of work on the story
+              if (task.parentStory && task.inProgressDate) {
+                if (storyStarts[task.parentStory.id]) {
+                  if (task.inProgressDate < storyStarts[task.parentStory.id]) {
+                    storyStarts[task.parentStory.id] = task.inProgressDate;
+                  }
+                } else {
+                  storyStarts[task.parentStory.id] = task.inProgressDate;
+                }
+              }
+              // If the task is started, it goes to the pivot
+              if (task.spent > 0) {
+                tasks.push(...prepareTaskForPivot(task, stories)); // must spread before pushing, otherwise we build an array of array of objects (try it if you don't believe it)
+              }
+            });
+            await addAbsences(tasks);
+          })
+          .then(function () {
+            tasks.sort((a, b) => (a.terminée_le > b.terminée_le ? 1 : b.terminée_le > a.terminée_le ? -1 : 0));
+            res = cartouche ? cartouche : "";
+            res += "<style>@media print{@page {size: landscape}}</style>\n";
+            res += "| <div style='width:90px'>Date</div> | Tâche | Durée | Commentaire |\n";
+            res += "|---|---|---|---|\n";
+            // compute additional fields
+            tasks.forEach(function (task) {
+              // tag bad estimates
+              let ratio = task.temps_effectif / task.temps_estimé;
+              task.facile = ratio < 0.5;
+              task.durdur = ratio > 1.5;
+              if (task.story_id > 0) {
+                task.surprise = task.date_de_création > storyStarts[task.story_id]; // task was a surprise if it was created AFTER some tasks were already completed in this story
+              }
+              res += "|";
+              res += new Date(task.terminée_le).toLocaleDateString("fr-CH", dateFormatOptions);
+              res += "|";
+              res += task.tâche;
+              res += "|";
+              res += task.temps_effectif;
+              res += "|";
+              res += task.remarque.replace(/(\r\n|\n|\r)/gm, "");
+              res += "|\n";
+            });
+            // Create a Blob from the text
+            const resBlob = new Blob([res], { type: "text/plain" });
+
+            // Create a URL for the Blob
+            const resURL = URL.createObjectURL(resBlob);
+
+            // Create an anchor element
+            const downloadLink = document.createElement("a");
+            downloadLink.href = resURL;
+            downloadLink.download = "journal_" + selProj.value + ".md";
+
+            // Programmatically click the anchor element to trigger the download
+            downloadLink.click();
+
+            // Clean up by revoking the object URL
+            URL.revokeObjectURL(resURL);
+            printSetup();
+          });
+      })
+      .catch(function (erreur) {
+        alert(
+          "Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri"
+        );
+        window.location = "index.html";
+      });
+  }
+
+  /**
+   * Returns an array of task objects. The array will have 1 task if the task has no tag or just one:  "tags": [],  or "tags": ["Ajax"]"
+   * It will have one item per tag value if threr are more: "tags": ["Ajax","forlater"]"
+   * @param task : the task received from the API
+   * @param stories : contains things that are not in task.parentStory
+   * @returns {[]}
+   */
+  function prepareTaskForPivot(task, stories) {
+    res = [];
+
+    // determine story name
+    storyname = "?";
+    if (task.type == 10) storyname = "Récurrente";
+    if (task.type == 11) storyname = "Urgente";
+    task.feature = "Aucune";
+    if (task.parentStory) {
+      storyname = task.parentStory.name;
+      task.feature = stories[task.parentStory.id].feature;
+    }
+
+    // Apply date adjustment if required in the remarque
+    const fixdateregex = /^Date:(.*?)(\n|$)/gi;
+    let match;
+    if ((match = fixdateregex.exec(task.notes)) !== null && task.doneDate != null) {
+      let error = null;
+      // change the date
+      dateparts = match[1].trim().split("."); // expected date format: 'dd.mm.yyyy'
+      if (dateparts.length == 3) {
+        newdate = new Date(dateparts[2] + "-" + dateparts[1] + "-" + dateparts[0] + " 12:00"); // put it at noon, otherwise it will show on the day before when displayed in local time
+        if (!(newdate.getFullYear() > 2000)) error = "Date invalide";
+      } else {
+        error = "Date invalide";
+      }
+      if (error == null) {
+        // Everything OK, store it
+        task.notes = task.notes.split("\n").slice(1).join("\n"); // remove the 'command' from the notes
+        console.log(newdate);
+        task.doneDate = newdate.toISOString().slice(0, 10);
+      } else {
+        alert(
+          "Le changement de date `" +
+            match[1] +
+            "` de la tâche " +
+            task.name +
+            " est mal formulé:\n" +
+            error +
+            '\n\nRappel: le format est:\n\n  "Date: <date>"\n  Exemple:\n  "Date: 27.2.2024"'
+        );
+      }
+    }
+
+    res.push({
+      tâche: task.name,
+      description: task.description,
+      story: storyname,
+      story_id: task.parentStory ? task.parentStory.id : 0, // useful when stories have the same name in different sprints
+      release: task.sprint.parentRelease ? task.sprint.parentRelease.name : "?",
+      sprint: task.sprint.index,
+      feature: task.feature,
+      temps_effectif: task.spent ? task.spent : "",
+      effectuée_par: task.responsible ? task.responsible.firstName : "",
+      temps_estimé: task.initial ? task.initial : "",
+      date_de_création: new Date(task.dateCreated).toLocaleDateString("fr-CH", dateFormatOptions),
+      type_story: task.parentStory ? stories[task.parentStory.id].type : "rec/urg",
+      terminée_le: task.doneDate ? task.doneDate.substring(0, 10) : "?",
+      semaine: task.doneDate ? getNumberOfWeek(task.doneDate.substring(0, 10)) : "?",
+      remarque: task.notes ? markdownconverter.makeHtml(task.notes) : "",
+      surprise: task.surprise,
+      tag: task.tags.length == 0 ? "" : task.tags[0] // only one tag can be taken into account
+    });
+    return res;
+  }
+
+  // Add the absences as tasks
+  // Absences are extracted from the sprint retrospective, where the must be noted as 'Absence: toto, 23.3.2024, 240, blabla'
+
+  async function addAbsences(tasks) {
+    await fetch(API_project_url + "/sprint?icescrum-token=" + iceScrumToken) // Get all sprints
+      .then(function (response) {
+        return response.json();
+      })
+      .then((sprints) => {
+        const absregex = /Absence:(.*?)(\n|$)/gi;
+        for (sprint of sprints) {
+          let match;
+          while ((match = absregex.exec(sprint.retrospective)) !== null) {
+            // process one absence
+            let abs = match[1].trim().split(",");
+            abs[3] = abs.slice(3).join(","); // concatenate extra strings into index 3, in case there were commas in the reason part of the absence
+            let error = null;
+            abs[2] = parseInt(abs[2]);
+            error = abs[2] > 0 ? null : "Durée invalide";
+            dateparts = abs[1].trim().split("."); // expected date format: 'dd.mm.yyyy'
+            if (dateparts.length == 3) {
+              abs[1] = new Date(dateparts[2] + "-" + dateparts[1] + "-" + dateparts[0]);
+              if (!(abs[1].getFullYear() > 2000)) error = "Date invalide";
+            } else {
+              error = "Date invalide";
+            }
+            if (error == null) {
+              // Everything OK, store it
+              tasks.push({
+                tâche: "Absence",
+                story: "Administratif",
+                story_id: 0,
+                release: sprint.parentRelease,
+                sprint: sprint.index,
+                feature: null,
+                temps_effectif: abs[2],
+                effectuée_par: abs[0],
+                temps_estimé: null,
+                date_de_création: abs[1].toLocaleDateString("fr-CH", dateFormatOptions),
+                type_story: null,
+                terminée_le: abs[1].toISOString().slice(0, 10),
+                semaine: getNumberOfWeek(abs[1]),
+                remarque: abs[3],
+                surprise: true,
+                tag: "Absence"
+              });
+            } else {
+              alert(
+                "L'absence `" +
+                  match[1] +
+                  "` du sprint " +
+                  sprint.orderNumber +
+                  " est mal formulée:\n" +
+                  error +
+                  '\n\nRappel: le format est:\n\n  "Absence: <personne>, <date>, <durée (min)>, <raison>"\n  Exemple:\n  "Absence: jules,27.2.2024,225,malade"'
+              );
+            }
+          }
+        }
+      })
+      .catch(function (erreur) {
+        console.log(erreur);
+        alert(
+          "Erreur de connexion au serveur IceScrum\n\nSi internet est ok (=vous pouvez atteindre icescrum.cpnv.ch avec votre navigateur), alors c'est probablement que le code du projet est faux ou que votre token est pourri"
+        );
+        window.location = "index.html";
+      });
+  }
+
+  /**
+   * return the week number in format YYWW
+   * credit to https://stackoverflow.com/questions/8224459/how-to-create-a-date-object-from-string-in-javascript
+   * @param date
+   * @returns {number}
+   */
+  function getNumberOfWeek(date) {
+    date = new Date(Date.parse(date));
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+    return 100 * (date.getFullYear() % 100) + Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  }
+
+  /**
+   * Add the class d-print-none to all elements of the pivot table that we don't want to see on the printed page
+   */
+  function printSetup() {
+    ["pvtAxisContainer", "pvtRenderer", "pvtUiCell", "btn"].forEach(function (classname) {
+      $("." + classname).each(function (index, element) {
+        element.classList.add("d-print-none");
+      });
+    });
+  }
+</script>
